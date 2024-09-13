@@ -1,0 +1,25 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++2b",
+      "-I./include/TodoList",
+      "-c",
+      "-I/Users/mohamadessa/Developer/CppLibraries/wxWidgets/macbuild/lib/wx/include/osx_cocoa-unicode-3.2",
+      "-I/Users/mohamadessa/Developer/CppLibraries/wxWidgets/include",
+      "-DWXUSINGDLL",
+      "-D__WXOSX_COCOA__",
+      "-D__WXMAC__",
+      "-D__WXOSX__",
+      "-D_FILE_OFFSET_BITS=64",
+      "-pthread",
+      "-pthread",
+      "-o",
+      "./build/test.o",
+      "./src/test.cpp"
+    ],
+    "directory": "/Users/mohamadessa/Developer/Git/Projects/TodoList",
+    "file": "/Users/mohamadessa/Developer/Git/Projects/TodoList/src/test.cpp",
+    "output": "/Users/mohamadessa/Developer/Git/Projects/TodoList/build/test.o"
+  }
+]
