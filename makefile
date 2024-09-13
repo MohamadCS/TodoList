@@ -12,7 +12,7 @@ TARGET=program
 all: clean build
 
 leaks: build
-	   leaks -atExit -- ./$(TARGET)
+	   leaks -atExit -- $(BUILD_DIR)/$(TARGET)
 
 SOURCES = $(wildcard $(SRC_DIR)/*.cpp)
 OBJECTS = $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SOURCES))
@@ -23,7 +23,7 @@ $(BUILD_DIR)/$(TARGET): $(OBJECTS)
 	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $(LINK)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
-	$(CC) $(CFLAGS) $(INCLUDE_DIR) -c $< -o $@ $(LINK)
+	$(CC) $(CFLAGS) $(INCLUDE_DIR) -c $< -o $@ $(LINK) 
 
 clean:
 	rm -f $(BUILD_DIR)/*.o $(BUILD_DIR)/program
