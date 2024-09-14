@@ -3,9 +3,7 @@
 #include <wx/app.h>
 #include <wx/string.h>
 
-#include "AppCore.hpp"
 #include "MainFrame.hpp"
-#include "wx/osx/frame.h"
 
 struct Views {
     MainFrame* mainFrame;
@@ -15,6 +13,7 @@ class AppGui : public wxApp {
 public:
     AppGui() = default;
     ~AppGui() override = default;
+
     bool OnInit() override;
 
 private:

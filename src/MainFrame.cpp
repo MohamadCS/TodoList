@@ -1,4 +1,5 @@
 #include "../include/TodoList/MainFrame.hpp"
+#include "../include/TodoList/AppCore.hpp"
 #include "../include/TodoList/TaskComp.hpp"
 #include "wx/app.h"
 #include "wx/event.h"
@@ -52,9 +53,12 @@ void MainFrame::setupSideBar() {
 
 void MainFrame::setupTaskPanel() {
     m_taskPanelBoxSizer = new wxBoxSizer(wxVERTICAL);
-    auto* hello =
-        new TaskComp(this, wxID_ANY);
+    auto& appCore = AppCore::instance();
 
-    m_taskPanelBoxSizer->Add(
-        hello, wxSizerFlags().Expand().Align(wxCENTER).Proportion(0).FixedMinSize());
+    auto* taskPtr = appCore.newTask({}, {}, "hello", "hello", true);
+
+    for (int i = 0; i < 30; ++i) {
+        auto* hello = new TaskComp(this, wxID_ANY, taskPtr);
+        m_taskPanelBoxSizer->Add(hello, wxSizerFlags().Expand().Border(wxALL, 10));
+    }
 }
