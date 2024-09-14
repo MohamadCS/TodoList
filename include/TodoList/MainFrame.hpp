@@ -5,6 +5,14 @@
 #include <wx/sizer.h>
 
 struct Sidebar{
+    // inbox, today, info ...
+    wxBoxSizer* defaultBoxSizer;
+
+    // project list
+    wxBoxSizer* projectsBoxSizer;
+
+    wxButton* inboxButton;
+    wxButton* todayButton;
 };
 
 struct TaskPanel{
@@ -20,16 +28,21 @@ public:
 
     void setup();
 
+
     ~MainFrame() override = default;
 
-public:
-
 private:
-
+    const wxSize DEFAULT_FRAME_DIMS = wxSize(800,600);
+    const int SIDEBAR_WIDTH = 200;
+private:
     wxBoxSizer* m_mainBoxSizer;
     wxBoxSizer* m_sidebarBoxSizer;
     wxBoxSizer* m_taskPanelBoxSizer;
-    Sidebar m_sidebarControls;
+    Sidebar m_sidebar;
     bool m_ready;
+private:
+    void setupTaskPanel();
+    void setupSideBar();
+
 };
 

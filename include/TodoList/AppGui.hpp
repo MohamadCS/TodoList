@@ -1,18 +1,17 @@
 #pragma once
 
-
-#include <wx/string.h>
 #include <wx/app.h>
+#include <wx/string.h>
 
 #include "AppCore.hpp"
 #include "MainFrame.hpp"
 #include "wx/osx/frame.h"
 
-struct Views{
+struct Views {
     MainFrame* mainFrame;
 };
 
-class AppGui : public wxApp{
+class AppGui : public wxApp {
 public:
     AppGui() = default;
     ~AppGui() override = default;
@@ -27,4 +26,3 @@ private:
 };
 
 wxIMPLEMENT_APP(AppGui);
-

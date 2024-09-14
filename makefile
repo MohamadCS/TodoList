@@ -9,15 +9,16 @@ CC= $(COMPILER) $(VERSION)
 TARGET=program
 
 
-all: clean build
-
-leaks: build
-	   leaks -atExit -- $(BUILD_DIR)/$(TARGET)
-
 SOURCES = $(wildcard $(SRC_DIR)/*.cpp)
 OBJECTS = $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SOURCES))
 
-all: $(BUILD_DIR)/$(TARGET)
+all: clean $(BUILD_DIR)/$(TARGET)
+
+run: clean $(BUILD_DIR)/$(TARGET) 
+	$(BUILD_DIR)/$(TARGET)
+
+leaks: $(BUILD_DIR)/$(TARGET) 
+	leaks -atExit -- $(BUILD_DIR)/$(TARGET)
 
 $(BUILD_DIR)/$(TARGET): $(OBJECTS)
 	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $(LINK)
