@@ -1,5 +1,4 @@
 #pragma once
- 
 
 #include "AppCore.hpp"
 
@@ -11,13 +10,20 @@
 #include <wx/textctrl.h>
 #include <wx/window.h>
 
-class TaskComp : public wxPanel {
-public:
-    TaskComp(wxWindow* parent, wxWindowID id, Task* taskPtr,
-             const wxPoint& postion = wxDefaultPosition,
-             const wxSize& size = DEFAULT_SIZE);
+struct TaskComp;
 
-private:
+struct TaskCompList{
+    std::string name;
+
+    std::vector<TaskComp*> m_taskCompVec;
+
+    void show();
+    void hide();
+};
+
+struct TaskComp : public wxPanel {
+public:
+
     Task* m_task;
     wxStaticText* m_taskText;
     wxStaticText* m_duoDateText;
@@ -26,13 +32,22 @@ private:
     wxCheckBox* m_checkBox;
     wxBoxSizer* m_mainSizer;
 
-private:
-    inline static const wxSize DEFAULT_SIZE = wxSize(200, 200);
+    std::vector<TaskCompList*> m_taskCompLists;
+
     void setStyle();
     void setBindings();
     void allocateControls();
     void setControlsLayout();
     void onKeyPressedTextCtrl(wxKeyEvent&);
     void onPanelDoubleLeftClick(wxMouseEvent&);
-    void onReturnPressed();
+    void cancelTextInsertion();
+
+    TaskComp(wxWindow* parent, wxWindowID id, Task* taskPtr,
+             const wxPoint& postion = wxDefaultPosition,
+             const wxSize& size = DEFAULT_SIZE);
+
+    void hide();
+    void show();
+
+    inline static const wxSize DEFAULT_SIZE = wxSize(200, 200);
 };

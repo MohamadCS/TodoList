@@ -1,22 +1,31 @@
 #pragma once
 
+#include "AppCore.hpp"
+#include "TaskComp.hpp"
+#include "TaskProjectComp.hpp"
+#include "wx/event.h"
+#include "wx/stattext.h"
+#include <cstdint>
+#include <map>
 #include <utility>
 #include <wx/frame.h>
 #include <wx/sizer.h>
 
 struct Sidebar {
-    wxBoxSizer* defaultBoxSizer;
-
+    wxBoxSizer* sidebarBoxSizer;
+    wxBoxSizer* homeBoxSizer;
     wxBoxSizer* projectsBoxSizer;
-
-    wxButton* inboxButton;
-    wxButton* todayButton;
+    TaskProjectComp* todayProject;
+    TaskProjectComp* inboxProject;
+    std::map<std::uint32_t, TaskProjectComp*> projectList;
 };
 
-struct TaskPanel {};
+struct TaskPanel {
+    wxBoxSizer* taskPanelBoxSizer;
+    TaskProjectComp* currentTaskCompList;
+};
 
 class MainFrame : public wxFrame {
-
 public:
     template <class... Args>
     MainFrame(Args... args);
@@ -26,19 +35,20 @@ public:
     ~MainFrame() override = default;
 
 private:
-    const wxSize DEFAULT_FRAME_DIMS = wxSize(800, 600);
-    const int SIDEBAR_WIDTH = 200;
-
-private:
     wxBoxSizer* m_mainBoxSizer;
-    wxBoxSizer* m_sidebarBoxSizer;
-    wxBoxSizer* m_taskPanelBoxSizer;
     Sidebar m_sidebar;
+    TaskPanel m_taskPanel;
     bool m_ready;
 
-private:
     void setupTaskPanel();
     void setupSideBar();
+
+    void onProjectChange(wxCommandEvent&);
+
+    void test();
+
+    const wxSize DEFAULT_FRAME_DIMS = wxSize(800, 600);
+    const int SIDEBAR_WIDTH = 200;
 };
 
 template <class... Args>

@@ -8,3 +8,5 @@ bool AppGui::OnInit() {
     m_views.mainFrame->Show();
     return true;
 }
+
+

@@ -1,32 +1,25 @@
 #include "../include/TodoList/TaskComp.hpp"
+
 #include "wx/checkbox.h"
-#include "wx/event.h"
-#include "wx/gdicmn.h"
 #include "wx/sizer.h"
-#include <algorithm>
-#include <functional>
-#include <map>
 #include <wx/log.h>
 
-static void showSizer(wxBoxSizer& sizer, bool state = true);
+#include <algorithm>
+#include <map>
+
+static void showSizer(wxBoxSizer* sizer, bool state = true);
+static void onReturnPressed(TaskComp* taskComp);
+static void onEscapePressed(TaskComp* taskComp);
 
 TaskComp::TaskComp(wxWindow* parent, wxWindowID id, Task* taskPtr, const wxPoint& postion, const wxSize& size)
     : wxPanel(parent, id, postion, size),
       m_task(taskPtr) {
-
+    SetMinSize(DEFAULT_SIZE);
     allocateControls();
     setControlsLayout();
     setBindings();
     setStyle();
     SetSizerAndFit(m_mainSizer);
-}
-
-void TaskComp::setControlsLayout() {
-    m_textCtrl->Hide();
-    auto sizerFlags = wxSizerFlags(wxSizerFlags());
-    m_mainSizer->Add(m_checkBox, sizerFlags);
-    m_mainSizer->Add(m_taskText, sizerFlags);
-    m_mainSizer->Add(m_textCtrl, sizerFlags.Expand());
 }
 
 void TaskComp::allocateControls() {
@@ -37,8 +30,15 @@ void TaskComp::allocateControls() {
     m_taskText = new wxStaticText(this, wxID_ANY, m_task->taskText);
 
     auto textStyle = wxTE_RICH | wxTE_LEFT | wxTE_WORDWRAP | wxTE_MULTILINE;
-    m_textCtrl =
-        new wxTextCtrl(this, wxID_ANY, m_task->taskText, wxDefaultPosition, wxSize(this->GetSize()), textStyle);
+    m_textCtrl = new wxTextCtrl(this, wxID_ANY, m_task->taskText, wxDefaultPosition, wxDefaultSize, textStyle);
+}
+
+void TaskComp::setControlsLayout() {
+    m_textCtrl->Hide();
+    auto sizerFlags = wxSizerFlags(wxSizerFlags());
+    m_mainSizer->Add(m_checkBox, sizerFlags);
+    m_mainSizer->Add(m_taskText, sizerFlags);
+    m_mainSizer->Add(m_textCtrl, sizerFlags.Expand());
 }
 
 void TaskComp::setBindings() {
@@ -60,21 +60,10 @@ void TaskComp::onPanelDoubleLeftClick(wxMouseEvent&) {
     m_textCtrl->SetFocus();
 }
 
-static void showSizer(wxBoxSizer* sizer, bool state) {
-    auto& children = sizer->GetChildren();
-    std::for_each(children.begin(), children.end(), [state](auto& child) { child->Show(state); });
-}
-
-void TaskComp::onReturnPressed() {
-    showSizer(m_mainSizer, true);
-    m_textCtrl->Hide();
-    m_taskText->SetLabel(m_textCtrl->GetValue());
-}
-
 void TaskComp::onKeyPressedTextCtrl(wxKeyEvent& keyEv) {
-    const std::map<int, decltype(&TaskComp::onReturnPressed)> keyToHandler = {
-        {WXK_RETURN, &TaskComp::onReturnPressed},
-        // TODO: handle ESC
+    const std::map<int, std::function<void(TaskComp*)>> keyToHandler = {
+        {WXK_RETURN, &onReturnPressed},
+        {WXK_ESCAPE, &TaskComp::cancelTextInsertion},
     };
 
     if (auto handlerIt = keyToHandler.find(keyEv.GetKeyCode()); handlerIt != keyToHandler.end()) {
@@ -83,4 +72,53 @@ void TaskComp::onKeyPressedTextCtrl(wxKeyEvent& keyEv) {
     } else {
         keyEv.Skip();
     }
+}
+
+static void showSizer(wxBoxSizer* sizer, bool state) {
+
+    if (sizer == nullptr) {
+        wxLogDebug("Got Null");
+        exit(0);
+    }
+
+    auto& children = sizer->GetChildren();
+    std::for_each(children.begin(), children.end(), [state](auto& child) { child->Show(state); });
+}
+
+void TaskComp::cancelTextInsertion() {
+    showSizer(m_mainSizer, true);
+    m_textCtrl->Hide();
+    m_taskText->SetLabel(m_textCtrl->GetValue());
+}
+
+static void onReturnPressed(TaskComp* taskComp) {
+
+    if (taskComp == nullptr) {
+        wxLogDebug("Got Null");
+        exit(0);
+    }
+
+    showSizer(taskComp->m_mainSizer, true);
+    taskComp->m_textCtrl->Hide();
+    taskComp->m_taskText->SetLabel(taskComp->m_textCtrl->GetValue());
+}
+
+void TaskComp::show() {
+    auto& children = m_mainSizer->GetChildren();
+    std::for_each(children.begin(), children.end(), [](auto& child) { child->Show(true); });
+    // Show(true);
+}
+
+void TaskComp::hide() {
+    auto& children = m_mainSizer->GetChildren();
+    std::for_each(children.begin(), children.end(), [](auto& child) { child->Show(false); });
+    Show(false);
+}
+
+void TaskCompList::show() {
+    std::for_each(m_taskCompVec.begin(), m_taskCompVec.end(), [](TaskComp* taskCompPtr) { taskCompPtr->show(); });
+}
+
+void TaskCompList::hide() {
+    std::for_each(m_taskCompVec.begin(), m_taskCompVec.end(), [](TaskComp* taskCompPtr) { taskCompPtr->hide(); });
 }
