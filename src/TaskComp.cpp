@@ -1,7 +1,9 @@
 #include "../include/TodoList/TaskComp.hpp"
 
 #include "wx/checkbox.h"
+#include "wx/gdicmn.h"
 #include "wx/sizer.h"
+#include "wx/textctrl.h"
 #include <wx/log.h>
 
 #include <algorithm>
@@ -31,15 +33,16 @@ void TaskComp::allocateControls() {
     m_taskText = new wxStaticText(this, wxID_ANY, m_task->taskText);
 
     auto textStyle = wxTE_RICH | wxTE_LEFT | wxTE_WORDWRAP | wxTE_MULTILINE;
-    m_textCtrl = new wxTextCtrl(this, wxID_ANY, m_task->taskText, wxDefaultPosition, GetSize(), textStyle);
+
+    m_textCtrl = new wxTextCtrl(this, wxID_ANY, m_task->taskText, wxDefaultPosition,wxDefaultSize, textStyle);
 }
 
 void TaskComp::setControlsLayout() {
     m_textCtrl->Hide();
-    auto sizerFlags = wxSizerFlags(wxSizerFlags());
-    m_mainSizer->Add(m_checkBox, sizerFlags.Border(wxALL, 10));
-    m_mainSizer->Add(m_taskText, sizerFlags.Center());
-    m_mainSizer->Add(m_textCtrl, sizerFlags.Center());
+    auto sizerFlags = wxSizerFlags();
+    m_mainSizer->Add(m_checkBox, sizerFlags.Border(wxALL,10));
+    m_mainSizer->Add(m_taskText, sizerFlags.Border(wxALL,10));
+    m_mainSizer->Add(m_textCtrl, sizerFlags.Expand().Border(wxALL,10));
 }
 
 void TaskComp::setBindings() {
@@ -50,7 +53,8 @@ void TaskComp::setBindings() {
 }
 
 void TaskComp::setStyle() {
-    SetBackgroundColour(wxTransparentColor);
+    SetBackgroundColour(wxColor(242, 233, 222));
+    m_textCtrl->SetBackgroundColour(GetBackgroundColour());
     SetWindowStyle(GetWindowStyle() | wxBORDER_DOUBLE);
 }
 

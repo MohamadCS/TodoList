@@ -16,13 +16,18 @@ struct TaskProjectComp : public wxPanel {
     TaskCompList* taskListComp;
     wxStaticText* projectNameText;
     wxString projectName;
+
+    wxColor unselectedColor; 
+    wxColor selectedColor; 
+    wxColor textColor;
+
     std::uint32_t projectId;
 
     TaskProjectComp(wxWindow* parent, wxWindowID id, std::uint32_t projectId, const std::string& projectName,
                     TaskList* taskList = nullptr, const wxPoint& postion = wxDefaultPosition,
                     const wxSize& size = DEFAULT_SIZE);
 
-    inline static const wxSize DEFAULT_SIZE = wxSize(200,100);
+    inline static const wxSize DEFAULT_SIZE = wxSize(200,50);
 
     void onPanelLeftClick(wxMouseEvent&);
     void select(wxBoxSizer*);

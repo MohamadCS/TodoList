@@ -1,4 +1,5 @@
 #include "../include/TodoList/TaskProjectComp.hpp"
+#include "wx/colour.h"
 #include "wx/osx/stattext.h"
 #include "wx/stattext.h"
 
@@ -19,22 +20,31 @@ TaskProjectComp::TaskProjectComp(wxWindow* parent, wxWindowID id, std::uint32_t 
     : wxPanel(parent, id, postion, DEFAULT_SIZE),
       taskListComp(new TaskCompList),
       projectName(projectName),
-      projectId(projectId) {
+      projectId(projectId),
+      unselectedColor(wxColor(242, 233, 222)),
+      selectedColor(wxColor(206, 202, 205)),
+      textColor() {
 
     SetName("Project Panel");
+
     SetMinSize(DEFAULT_SIZE);
 
     auto& appCore = AppCore::instance();
 
-    projectNameText = new wxStaticText(this, wxID_ANY,projectName);
+    projectNameText =
+        new wxStaticText(this, wxID_ANY, projectName, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTRE_HORIZONTAL);
 
     taskListComp->m_taskList = (taskList == nullptr) ? appCore.newTaskList() : taskList;
-    mainSizer = new wxBoxSizer(wxVERTICAL);
-    mainSizer->Add(projectNameText,wxSizerFlags().Proportion(1));
+    mainSizer = new wxBoxSizer(wxHORIZONTAL);
+
+    mainSizer->AddStretchSpacer(1);
+    mainSizer->Add(projectNameText, wxSizerFlags(1).CenterVertical());
+    mainSizer->AddStretchSpacer(1);
+    Layout();
 
     Bind(wxEVT_LEFT_DOWN, &TaskProjectComp::onPanelLeftClick, this);
     SetWindowStyle(GetWindowStyle() | wxBORDER_DOUBLE);
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(unselectedColor);
 }
 
 void TaskProjectComp::onPanelLeftClick(wxMouseEvent& ev) {
@@ -66,7 +76,7 @@ void TaskProjectComp::select(wxBoxSizer* sizer) {
 
     auto& appCore = AppCore::instance();
     appCore.setCurrentProjectId(projectId);
-    SetBackgroundColour(*wxLIGHT_GREY);
+    SetBackgroundColour(selectedColor);
     Refresh();
 }
 
@@ -84,7 +94,7 @@ void TaskProjectComp::unselect(wxBoxSizer* sizer) {
         detach_comp(taskCompPtr);
     }
 
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(unselectedColor);
     Refresh();
 }
 

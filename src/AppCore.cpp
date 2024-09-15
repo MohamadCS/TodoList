@@ -1,8 +1,5 @@
 #include "../include/TodoList/AppCore.hpp"
-#include <algorithm>
 #include <memory>
-#include <optional>
-#include <type_traits>
 #include <utility>
 
 AppCore& AppCore::instance() {
