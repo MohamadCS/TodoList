@@ -14,6 +14,7 @@ static void onEscapePressed(TaskComp* taskComp);
 TaskComp::TaskComp(wxWindow* parent, wxWindowID id, Task* taskPtr, const wxPoint& postion, const wxSize& size)
     : wxPanel(parent, id, postion, size),
       m_task(taskPtr) {
+    SetName("Task");
     SetMinSize(DEFAULT_SIZE);
     allocateControls();
     setControlsLayout();
@@ -30,15 +31,15 @@ void TaskComp::allocateControls() {
     m_taskText = new wxStaticText(this, wxID_ANY, m_task->taskText);
 
     auto textStyle = wxTE_RICH | wxTE_LEFT | wxTE_WORDWRAP | wxTE_MULTILINE;
-    m_textCtrl = new wxTextCtrl(this, wxID_ANY, m_task->taskText, wxDefaultPosition, wxDefaultSize, textStyle);
+    m_textCtrl = new wxTextCtrl(this, wxID_ANY, m_task->taskText, wxDefaultPosition, GetSize(), textStyle);
 }
 
 void TaskComp::setControlsLayout() {
     m_textCtrl->Hide();
     auto sizerFlags = wxSizerFlags(wxSizerFlags());
-    m_mainSizer->Add(m_checkBox, sizerFlags);
-    m_mainSizer->Add(m_taskText, sizerFlags);
-    m_mainSizer->Add(m_textCtrl, sizerFlags.Expand());
+    m_mainSizer->Add(m_checkBox, sizerFlags.Border(wxALL, 10));
+    m_mainSizer->Add(m_taskText, sizerFlags.Center());
+    m_mainSizer->Add(m_textCtrl, sizerFlags.Center());
 }
 
 void TaskComp::setBindings() {

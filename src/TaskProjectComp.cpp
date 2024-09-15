@@ -1,34 +1,39 @@
 #include "../include/TodoList/TaskProjectComp.hpp"
-#include "wx/checkbox.h"
-#include "wx/event.h"
-#include "wx/gdicmn.h"
-#include "wx/log.h"
-#include "wx/sizer.h"
+#include "wx/osx/stattext.h"
+#include "wx/stattext.h"
+
+#include <wx/checkbox.h>
+#include <wx/event.h>
+#include <wx/gdicmn.h>
+#include <wx/log.h>
+#include <wx/osx/window.h>
+#include <wx/sizer.h>
+#include <wx/window.h>
+
 #include <cstdint>
+#include <utility>
 
-wxDEFINE_EVENT(EVT_CHANGE_PROJECT, wxCommandEvent);
-
-TaskProjectComp::TaskProjectComp(wxWindow* parent, wxWindowID id, TaskCompList* taskPtr, std::uint32_t projectId,
-                                 const wxPoint& postion, const wxSize& size)
-    : wxPanel(parent, id, postion, size),
-      taskListComp(taskPtr),
-      taskList(AppCore::instance().newTaskList()),
+TaskProjectComp::TaskProjectComp(wxWindow* parent, wxWindowID id, std::uint32_t projectId,
+                                 const std::string& projectName, TaskList* taskList, const wxPoint& postion,
+                                 const wxSize& size)
+    : wxPanel(parent, id, postion, DEFAULT_SIZE),
+      taskListComp(new TaskCompList),
+      projectName(projectName),
       projectId(projectId) {
 
-    if (taskListComp == nullptr) {
-        wxLogDebug("Got nullptr");
-        exit(0);
-    }
+    SetName("Project Panel");
     SetMinSize(DEFAULT_SIZE);
 
+    auto& appCore = AppCore::instance();
+
+    projectNameText = new wxStaticText(this, wxID_ANY,projectName);
+
+    taskListComp->m_taskList = (taskList == nullptr) ? appCore.newTaskList() : taskList;
     mainSizer = new wxBoxSizer(wxVERTICAL);
-    projectNameText = new wxStaticText(this, wxID_ANY, taskListComp->name);
+    mainSizer->Add(projectNameText,wxSizerFlags().Proportion(1));
 
-    mainSizer->Add(projectNameText, wxSizerFlags().Expand());
-
-    this->Bind(wxEVT_LEFT_DOWN, &TaskProjectComp::onPanelLeftClick, this);
-
-    this->SetWindowStyle(GetWindowStyle() | wxBORDER_DOUBLE);
+    Bind(wxEVT_LEFT_DOWN, &TaskProjectComp::onPanelLeftClick, this);
+    SetWindowStyle(GetWindowStyle() | wxBORDER_DOUBLE);
     SetBackgroundColour(*wxWHITE);
 }
 
@@ -46,10 +51,17 @@ void TaskProjectComp::onPanelLeftClick(wxMouseEvent& ev) {
 }
 
 void TaskProjectComp::select(wxBoxSizer* sizer) {
+    auto sizerFlags = wxSizerFlags().Proportion(1).Expand().Border(wxALL, 10);
+
+    auto add_comp = [&sizer, &sizerFlags](auto&& control) mutable {
+        if (control != nullptr) {
+            sizer->Add(std::forward<decltype(control)>(control), sizerFlags);
+            control->Show();
+        }
+    };
 
     for (auto* taskCompPtr : taskListComp->m_taskCompVec) {
-        sizer->Add(taskCompPtr);
-        taskCompPtr->Show();
+        add_comp(taskCompPtr);
     }
 
     auto& appCore = AppCore::instance();
@@ -59,23 +71,34 @@ void TaskProjectComp::select(wxBoxSizer* sizer) {
 }
 
 void TaskProjectComp::unselect(wxBoxSizer* sizer) {
+
+    auto detach_comp = [&sizer](auto&& control) mutable {
+        if (control != nullptr) {
+            sizer->Detach(std::forward<decltype(control)>(control));
+            control->Hide();
+        }
+    };
+
     for (auto* taskCompPtr : taskListComp->m_taskCompVec) {
         taskCompPtr->cancelTextInsertion();
-        sizer->Detach(taskCompPtr);
-        taskCompPtr->Hide();
+        detach_comp(taskCompPtr);
     }
 
     SetBackgroundColour(*wxWHITE);
     Refresh();
 }
 
-void TaskProjectComp::addTask(Task* task) {
-    auto* taskComp = new TaskComp(GetParent(), wxID_ANY, task);
+void TaskProjectComp::addTask(Task* task, wxPanel* control) {
+    wxLogDebug("Creating a new task");
+    auto* taskComp = new TaskComp(control, wxID_ANY, task);
     auto& appCore = AppCore::instance();
-    if(appCore.getCurrentProjectId() == projectId){
+
+    if (appCore.getCurrentProjectId() == projectId) {
         taskComp->Show();
-    } else{
+        control->GetSizer()->Add(taskComp);
+    } else {
         taskComp->Hide();
     }
     taskListComp->m_taskCompVec.push_back(taskComp);
+    Refresh();
 }

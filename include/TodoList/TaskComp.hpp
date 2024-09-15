@@ -14,8 +14,8 @@ struct TaskComp;
 
 struct TaskCompList{
     std::string name;
-
     std::vector<TaskComp*> m_taskCompVec;
+    TaskList* m_taskList;
 
     void show();
     void hide();

@@ -3,7 +3,7 @@
     "arguments": [
       "/usr/bin/g++",
       "-std=c++2b",
-      "-I./include/TodoList",
+      "./include/TodoList",
       "-c",
       "-I/Users/mohamadessa/Developer/CppLibraries/wxWidgets/macbuild/lib/wx/include/osx_cocoa-unicode-3.2",
       "-I/Users/mohamadessa/Developer/CppLibraries/wxWidgets/include",
@@ -15,11 +15,103 @@
       "-pthread",
       "-pthread",
       "-o",
-      "./build/test.o",
-      "./src/test.cpp"
+      "build/AppCore.o",
+      "src/AppCore.cpp"
     ],
     "directory": "/Users/mohamadessa/Developer/Git/Projects/TodoList",
-    "file": "/Users/mohamadessa/Developer/Git/Projects/TodoList/src/test.cpp",
-    "output": "/Users/mohamadessa/Developer/Git/Projects/TodoList/build/test.o"
+    "file": "/Users/mohamadessa/Developer/Git/Projects/TodoList/src/AppCore.cpp",
+    "output": "/Users/mohamadessa/Developer/Git/Projects/TodoList/build/AppCore.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++2b",
+      "./include/TodoList",
+      "-c",
+      "-I/Users/mohamadessa/Developer/CppLibraries/wxWidgets/macbuild/lib/wx/include/osx_cocoa-unicode-3.2",
+      "-I/Users/mohamadessa/Developer/CppLibraries/wxWidgets/include",
+      "-DWXUSINGDLL",
+      "-D__WXOSX_COCOA__",
+      "-D__WXMAC__",
+      "-D__WXOSX__",
+      "-D_FILE_OFFSET_BITS=64",
+      "-pthread",
+      "-pthread",
+      "-o",
+      "build/AppGui.o",
+      "src/AppGui.cpp"
+    ],
+    "directory": "/Users/mohamadessa/Developer/Git/Projects/TodoList",
+    "file": "/Users/mohamadessa/Developer/Git/Projects/TodoList/src/AppGui.cpp",
+    "output": "/Users/mohamadessa/Developer/Git/Projects/TodoList/build/AppGui.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++2b",
+      "./include/TodoList",
+      "-c",
+      "-I/Users/mohamadessa/Developer/CppLibraries/wxWidgets/macbuild/lib/wx/include/osx_cocoa-unicode-3.2",
+      "-I/Users/mohamadessa/Developer/CppLibraries/wxWidgets/include",
+      "-DWXUSINGDLL",
+      "-D__WXOSX_COCOA__",
+      "-D__WXMAC__",
+      "-D__WXOSX__",
+      "-D_FILE_OFFSET_BITS=64",
+      "-pthread",
+      "-pthread",
+      "-o",
+      "build/MainFrame.o",
+      "src/MainFrame.cpp"
+    ],
+    "directory": "/Users/mohamadessa/Developer/Git/Projects/TodoList",
+    "file": "/Users/mohamadessa/Developer/Git/Projects/TodoList/src/MainFrame.cpp",
+    "output": "/Users/mohamadessa/Developer/Git/Projects/TodoList/build/MainFrame.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++2b",
+      "./include/TodoList",
+      "-c",
+      "-I/Users/mohamadessa/Developer/CppLibraries/wxWidgets/macbuild/lib/wx/include/osx_cocoa-unicode-3.2",
+      "-I/Users/mohamadessa/Developer/CppLibraries/wxWidgets/include",
+      "-DWXUSINGDLL",
+      "-D__WXOSX_COCOA__",
+      "-D__WXMAC__",
+      "-D__WXOSX__",
+      "-D_FILE_OFFSET_BITS=64",
+      "-pthread",
+      "-pthread",
+      "-o",
+      "build/TaskComp.o",
+      "src/TaskComp.cpp"
+    ],
+    "directory": "/Users/mohamadessa/Developer/Git/Projects/TodoList",
+    "file": "/Users/mohamadessa/Developer/Git/Projects/TodoList/src/TaskComp.cpp",
+    "output": "/Users/mohamadessa/Developer/Git/Projects/TodoList/build/TaskComp.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++2b",
+      "./include/TodoList",
+      "-c",
+      "-I/Users/mohamadessa/Developer/CppLibraries/wxWidgets/macbuild/lib/wx/include/osx_cocoa-unicode-3.2",
+      "-I/Users/mohamadessa/Developer/CppLibraries/wxWidgets/include",
+      "-DWXUSINGDLL",
+      "-D__WXOSX_COCOA__",
+      "-D__WXMAC__",
+      "-D__WXOSX__",
+      "-D_FILE_OFFSET_BITS=64",
+      "-pthread",
+      "-pthread",
+      "-o",
+      "build/TaskProjectComp.o",
+      "src/TaskProjectComp.cpp"
+    ],
+    "directory": "/Users/mohamadessa/Developer/Git/Projects/TodoList",
+    "file": "/Users/mohamadessa/Developer/Git/Projects/TodoList/src/TaskProjectComp.cpp",
+    "output": "/Users/mohamadessa/Developer/Git/Projects/TodoList/build/TaskProjectComp.o"
   }
 ]

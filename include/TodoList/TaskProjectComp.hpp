@@ -1,27 +1,36 @@
 #pragma once
 
+#include "Events.hpp"
 #include "TaskComp.hpp"
-#include "wx/event.h"
-#include "wx/sizer.h"
-#include <cstdint>
-#include <wx/panel.h>
+#include "wx/generic/panelg.h"
+#include "wx/osx/stattext.h"
 
-wxDECLARE_EVENT(EVT_CHANGE_PROJECT,wxCommandEvent);
-const wxEventType EVT_CHANGE_PROJECT_ID = wxNewEventType();
+#include <cstdint>
+
+#include <wx/event.h>
+#include <wx/panel.h>
+#include <wx/sizer.h>
 
 struct TaskProjectComp : public wxPanel {
-    wxStaticText* projectNameText;
     wxBoxSizer* mainSizer;
     TaskCompList* taskListComp;
-    TaskList* taskList;
+    wxStaticText* projectNameText;
+    wxString projectName;
     std::uint32_t projectId;
-    TaskProjectComp(wxWindow* parent, wxWindowID id, TaskCompList* taskListPtr,std::uint32_t projectId,
-                    const wxPoint& postion = wxDefaultPosition, const wxSize& size = DEFAULT_SIZE);
-    inline static const wxSize DEFAULT_SIZE = wxSize(200, 200);
+
+    TaskProjectComp(wxWindow* parent, wxWindowID id, std::uint32_t projectId, const std::string& projectName,
+                    TaskList* taskList = nullptr, const wxPoint& postion = wxDefaultPosition,
+                    const wxSize& size = DEFAULT_SIZE);
+
+    inline static const wxSize DEFAULT_SIZE = wxSize(200,100);
 
     void onPanelLeftClick(wxMouseEvent&);
     void select(wxBoxSizer*);
     void unselect(wxBoxSizer*);
-    void addTask(Task* newTask);
+    void addTask(Task* newTask, wxPanel*);
 
+    void allocateControls();
+    void setControlsLayout();
+    void setBindings();
+    void setStyle();
 };

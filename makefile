@@ -6,7 +6,7 @@ SRC_DIR = ./src
 BUILD_DIR = ./build
 LINK = $(shell ~/Developer/CppLibraries/wxWidgets/macbuild/wx-config --cxxflags --libs) # change for general use
 CC= $(COMPILER) $(VERSION)
-TARGET=program
+TARGET=TodoList
 
 
 SOURCES = $(wildcard $(SRC_DIR)/*.cpp)
