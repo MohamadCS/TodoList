@@ -32,6 +32,7 @@ TaskComp::TaskComp(wxWindow* parent, wxWindowID id, Task* taskPtr, const wxPoint
 void TaskComp::allocateControls() {
     m_mainSizer = new wxBoxSizer(wxHORIZONTAL);
 
+
     m_checkBox = new wxCheckBox(this, wxID_ANY, "");
 
     m_taskText = new wxStaticText(this, wxID_ANY, m_task->taskText);
