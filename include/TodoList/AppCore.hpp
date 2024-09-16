@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#include "../sqlite/sqlite3.h"
+// #include "../sqlite/sqlite3.h"
 
 using TimePoint = std::chrono::time_point<std::chrono::system_clock>;
 
@@ -46,7 +46,6 @@ public:
 private:
     std::deque<std::unique_ptr<Task>> m_tasks;
     std::deque<std::unique_ptr<TaskList>> m_taskLists;
-    sqlite3* m_tasksDb;
 
     std::uint32_t m_currentProjectId;
 

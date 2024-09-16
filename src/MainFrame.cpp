@@ -137,21 +137,21 @@ void MainFrame::onProjectChange(wxCommandEvent& ev) {
     setProject(taskProjectCompPtr);
 }
 
-void MainFrame::test() {
-    auto& appCore = AppCore::instance();
-    auto& inbox = m_sidebar.inboxProject;
-    auto& today = m_sidebar.todayProject;
-
-    for (int i = 0; i < 50; ++i) {
-        auto* task = appCore.newTask({}, {}, "inbox task", "", false, inbox->taskListComp->m_taskList);
-        inbox->addTask(task, m_taskPanel.bottomPanel);
-    }
-
-    for (int i = 0; i < 50; ++i) {
-        auto* task2 = appCore.newTask({}, {}, " today task", "", false, today->taskListComp->m_taskList);
-        today->addTask(task2, m_taskPanel.bottomPanel);
-    }
-}
+// void MainFrame::test() {
+//     auto& appCore = AppCore::instance();
+//     auto& inbox = m_sidebar.inboxProject;
+//     auto& today = m_sidebar.todayProject;
+//
+//     for (int i = 0; i < 50; ++i) {
+//         auto* task = appCore.newTask({}, {}, "inbox task", "", false, inbox->taskListComp->m_taskList);
+//         inbox->addTask(task, m_taskPanel.bottomPanel);
+//     }
+//
+//     for (int i = 0; i < 50; ++i) {
+//         auto* task2 = appCore.newTask({}, {}, " today task", "", false, today->taskListComp->m_taskList);
+//         today->addTask(task2, m_taskPanel.bottomPanel);
+//     }
+// }
 
 void MainFrame::setProject(TaskProjectComp* newProject) {
     wxLogDebug("Changing Project");
@@ -183,7 +183,7 @@ void MainFrame::setProject(TaskProjectComp* newProject) {
 void MainFrame::onAddTaskButtonClicked(wxCommandEvent& ev) {
     auto& appCore = AppCore::instance();
     auto* currentProject = m_taskPanel.currentTaskCompList;
-    auto* task = appCore.newTask({}, {}, "", "", false, currentProject->taskListComp->m_taskList);
+    auto* task = appCore.newTask({}, {}, "", "", false, currentProject->taskList);
     auto* taskCompPtr = currentProject->addTask(task, m_taskPanel.bottomPanel);
 
     auto mouseEvent = wxMouseEvent();

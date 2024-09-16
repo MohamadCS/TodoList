@@ -6,6 +6,8 @@
 #include "wx/gdicmn.h"
 #include "wx/sizer.h"
 #include "wx/textctrl.h"
+#include <cstdint>
+#include <sys/types.h>
 #include <wx/log.h>
 
 #include <algorithm>
@@ -17,58 +19,60 @@ static void showSizer(wxBoxSizer* sizer, bool state = true);
 static void onReturnPressed(TaskComp* taskComp);
 static void onEscapePressed(TaskComp* taskComp);
 
-TaskComp::TaskComp(wxWindow* parent, wxWindowID id, Task* taskPtr, const wxPoint& postion, const wxSize& size)
+TaskComp::TaskComp(wxWindow* parent, wxWindowID id, Task* taskPtr,std::pair<uint32_t,TaskProjectComp*> taskProject ,const wxPoint& postion, const wxSize& size)
     : wxPanel(parent, id, postion, size),
-      m_task(taskPtr) {
+      task(taskPtr)
+       {
+
+    taskProjects.insert_or_assign(taskProject.first,taskProject.second);
     SetName("Task");
     SetMinSize(DEFAULT_SIZE);
     allocateControls();
     setControlsLayout();
     setBindings();
     setStyle();
-    SetSizerAndFit(m_mainSizer);
+    SetSizerAndFit(mainSizer);
 }
 
 void TaskComp::allocateControls() {
-    m_mainSizer = new wxBoxSizer(wxHORIZONTAL);
+    mainSizer = new wxBoxSizer(wxHORIZONTAL);
 
+    checkBox = new wxCheckBox(this, wxID_ANY, "");
 
-    m_checkBox = new wxCheckBox(this, wxID_ANY, "");
-
-    m_taskText = new wxStaticText(this, wxID_ANY, m_task->taskText);
+    taskText = new wxStaticText(this, wxID_ANY, task->taskText);
 
     auto textStyle = wxTE_RICH | wxTE_LEFT | wxTE_WORDWRAP | wxTE_MULTILINE;
 
-    m_textCtrl = new wxTextCtrl(this, wxID_ANY, m_task->taskText, wxDefaultPosition, wxDefaultSize, textStyle);
+    textCtrl = new wxTextCtrl(this, wxID_ANY, task->taskText, wxDefaultPosition, wxDefaultSize, textStyle);
 }
 
 void TaskComp::setControlsLayout() {
-    m_textCtrl->Hide();
+    textCtrl->Hide();
     auto sizerFlags = wxSizerFlags();
-    m_mainSizer->Add(m_checkBox, sizerFlags.Border(wxALL, 10));
-    m_mainSizer->Add(m_taskText, sizerFlags.Border(wxALL, 10));
-    m_mainSizer->Add(m_textCtrl, sizerFlags.Border(wxALL, 10));
+    mainSizer->Add(checkBox, sizerFlags.Border(wxALL, 10));
+    mainSizer->Add(taskText, sizerFlags.Border(wxALL, 10));
+    mainSizer->Add(textCtrl, sizerFlags.Border(wxALL, 10));
 }
 
 void TaskComp::setBindings() {
     this->Bind(wxEVT_LEFT_DCLICK, &TaskComp::onPanelDoubleLeftClick, this);
     Bind(wxEVT_PAINT, &TaskComp::onPaint, this);
-    m_textCtrl->Bind(
+    textCtrl->Bind(
         wxEVT_KEY_DOWN, [this](wxKeyEvent& ev) { std::invoke(&TaskComp::onKeyPressedTextCtrl, this, std::ref(ev)); },
-        m_textCtrl->GetId());
+        textCtrl->GetId());
 }
 
 void TaskComp::setStyle() {
     SetBackgroundColour(wxTransparentColor);
-    m_textCtrl->SetBackgroundColour(GetBackgroundColour());
+    textCtrl->SetBackgroundColour(GetBackgroundColour());
     SetWindowStyle(GetWindowStyle() | wxNO_BORDER);
 }
 
 void TaskComp::onPanelDoubleLeftClick(wxMouseEvent& ev) {
-    auto& children = m_mainSizer->GetChildren();
+    auto& children = mainSizer->GetChildren();
     std::for_each(children.begin(), children.end(), [](auto& child) { child->Show(false); });
-    m_textCtrl->Show();
-    m_textCtrl->SetFocus();
+    textCtrl->Show();
+    textCtrl->SetFocus();
     ev.Skip();
 }
 
@@ -98,9 +102,9 @@ static void showSizer(wxBoxSizer* sizer, bool state) {
 }
 
 void TaskComp::cancelTextInsertion() {
-    showSizer(m_mainSizer, true);
-    m_textCtrl->Hide();
-    m_taskText->SetLabel(m_textCtrl->GetValue());
+    showSizer(mainSizer, true);
+    textCtrl->Hide();
+    taskText->SetLabel(textCtrl->GetValue());
 }
 
 static void onReturnPressed(TaskComp* taskComp) {
@@ -110,9 +114,9 @@ static void onReturnPressed(TaskComp* taskComp) {
         exit(0);
     }
 
-    showSizer(taskComp->m_mainSizer, true);
-    taskComp->m_textCtrl->Hide();
-    taskComp->m_taskText->SetLabel(taskComp->m_textCtrl->GetValue());
+    showSizer(taskComp->mainSizer, true);
+    taskComp->textCtrl->Hide();
+    taskComp->taskText->SetLabel(taskComp->textCtrl->GetValue());
 }
 
 void TaskComp::onPaint(wxPaintEvent& ev) {
@@ -125,22 +129,3 @@ void TaskComp::onPaint(wxPaintEvent& ev) {
     dc.DrawRoundedRectangle(wxRect(wxDefaultPosition, GetSize()), 10);
 }
 
-void TaskComp::show() {
-    auto& children = m_mainSizer->GetChildren();
-    std::for_each(children.begin(), children.end(), [](auto& child) { child->Show(true); });
-    // Show(true);
-}
-
-void TaskComp::hide() {
-    auto& children = m_mainSizer->GetChildren();
-    std::for_each(children.begin(), children.end(), [](auto& child) { child->Show(false); });
-    Show(false);
-}
-
-void TaskCompList::show() {
-    std::for_each(m_taskCompVec.begin(), m_taskCompVec.end(), [](TaskComp* taskCompPtr) { taskCompPtr->show(); });
-}
-
-void TaskCompList::hide() {
-    std::for_each(m_taskCompVec.begin(), m_taskCompVec.end(), [](TaskComp* taskCompPtr) { taskCompPtr->hide(); });
-}

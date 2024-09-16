@@ -1,4 +1,5 @@
 #include "../include/TodoList/AppCore.hpp"
+#include <iostream>
 #include <memory>
 #include <utility>
 
@@ -10,6 +11,9 @@ AppCore& AppCore::instance() {
 Task* AppCore::newTask(const TimePoint& duoDate, const TimePoint& deadLine, const std::string& taskText,
                        const std::string& taskDesc, bool checked, TaskList* taskList) {
 
+    if (taskList == nullptr) {
+        std::cerr << "Task Must Be in at least one task list" << '\n';
+    }
     Task task = {duoDate, deadLine, taskText, taskDesc, checked, m_taskIdCtr++};
     auto taskPtr = std::make_unique<Task>(std::move(task));
     m_tasks.push_back(std::move(taskPtr));
@@ -26,15 +30,14 @@ TaskList* AppCore::newTaskList(TaskList&& taskList) {
     return m_taskLists.back().get();
 }
 
-std::uint32_t AppCore::generateProjectId(){
+std::uint32_t AppCore::generateProjectId() {
     return m_projectIdCtr++;
 }
 
-void AppCore::setCurrentProjectId(std::uint32_t newProjectId){
+void AppCore::setCurrentProjectId(std::uint32_t newProjectId) {
     m_currentProjectId = newProjectId;
 }
 
-std::uint32_t AppCore::getCurrentProjectId() const{
+std::uint32_t AppCore::getCurrentProjectId() const {
     return m_currentProjectId;
 }
-

@@ -7,30 +7,34 @@
 
 #include <cstdint>
 
+#include <vector>
 #include <wx/event.h>
 #include <wx/panel.h>
 #include <wx/sizer.h>
 
+struct TaskComp;
+
 struct TaskProjectComp : public wxPanel {
-    wxBoxSizer* mainSizer;
-    std::unique_ptr<TaskCompList> taskListComp; 
-    wxStaticText* projectNameText;
-    wxString projectName;
-    bool isCurrentProject;
-
-    wxColor unselectedColor; 
-    wxColor selectedColor; 
-    wxColor textColor;
-
-    inline static const wxSizerFlags SIZER_FLAGS  = wxSizerFlags().Proportion(0).Expand().Border(wxALL, 10);
-
     std::uint32_t projectId;
+    bool isCurrentProject;
+    TaskList* taskList;
+    wxString projectName;
+
+    std::vector<TaskComp*> taskListComp;
+    wxBoxSizer* mainSizer;
+    wxStaticText* projectNameText;
+
+    wxColor unselectedColor = wxColor(250, 250, 250);
+    wxColor selectedColor = wxColor(238, 238, 238);
+    wxColor textColor = wxColor(0, 0, 0);
+
+    inline static const wxSizerFlags SIZER_FLAGS = wxSizerFlags().Proportion(0).Expand().Border(wxALL, 10);
 
     TaskProjectComp(wxWindow* parent, wxWindowID id, std::uint32_t projectId, const std::string& projectName,
-                    TaskList* taskList = nullptr, const wxPoint& postion = wxDefaultPosition,
+                    std::optional<TaskList*> taskList = std::nullopt, const wxPoint& postion = wxDefaultPosition,
                     const wxSize& size = DEFAULT_SIZE);
 
-    inline static const wxSize DEFAULT_SIZE = wxSize(50,50);
+    inline static const wxSize DEFAULT_SIZE = wxSize(50, 50);
 
     void onPanelLeftClick(wxMouseEvent&);
     void select(wxBoxSizer*);

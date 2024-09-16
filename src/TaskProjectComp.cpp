@@ -2,6 +2,7 @@
 #include "wx/colour.h"
 #include "wx/osx/stattext.h"
 #include <memory>
+#include <optional>
 #include <wx/checkbox.h>
 #include <wx/event.h>
 #include <wx/gdicmn.h>
@@ -14,16 +15,12 @@
 #include <utility>
 
 TaskProjectComp::TaskProjectComp(wxWindow* parent, wxWindowID id, std::uint32_t projectId,
-                                 const std::string& projectName, TaskList* taskList, const wxPoint& postion,
-                                 const wxSize& size)
+                                 const std::string& projectName, std::optional<TaskList*> taskList,
+                                 const wxPoint& postion, const wxSize& size)
     : wxPanel(parent, id, postion, DEFAULT_SIZE),
-      taskListComp(std::make_unique<TaskCompList>()),
-      projectName(projectName),
       projectId(projectId),
       isCurrentProject(false),
-      unselectedColor(wxColor(250, 250, 250)),
-      selectedColor(wxColor(238, 238, 238)),
-      textColor() {
+      projectName(projectName) {
 
     SetName("Project Panel");
 
@@ -31,10 +28,10 @@ TaskProjectComp::TaskProjectComp(wxWindow* parent, wxWindowID id, std::uint32_t 
 
     auto& appCore = AppCore::instance();
 
+    taskList = taskList.value_or(appCore.newTaskList());
+
     projectNameText =
         new wxStaticText(this, wxID_ANY, projectName, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL);
-
-    taskListComp->m_taskList = (taskList == nullptr) ? appCore.newTaskList() : taskList;
 
     mainSizer = new wxBoxSizer(wxVERTICAL);
 
@@ -73,7 +70,7 @@ void TaskProjectComp::select(wxBoxSizer* sizer) {
         }
     };
 
-    for (auto* taskCompPtr : taskListComp->m_taskCompVec) {
+    for (auto* taskCompPtr : taskListComp) {
         add_comp(taskCompPtr);
     }
 
@@ -93,7 +90,7 @@ void TaskProjectComp::unselect(wxBoxSizer* sizer) {
         }
     };
 
-    for (auto* taskCompPtr : taskListComp->m_taskCompVec) {
+    for (auto* taskCompPtr : taskListComp) {
         taskCompPtr->cancelTextInsertion();
         detach_comp(taskCompPtr);
     }
@@ -105,7 +102,7 @@ void TaskProjectComp::unselect(wxBoxSizer* sizer) {
 
 TaskComp* TaskProjectComp::addTask(Task* task, wxPanel* control) {
     wxLogDebug("Creating a new task");
-    auto* taskComp = new TaskComp(control, wxID_ANY, task);
+    auto* taskComp = new TaskComp(control, wxID_ANY, task, {projectId, this});
     auto& appCore = AppCore::instance();
 
     if (appCore.getCurrentProjectId() == projectId) {
@@ -113,7 +110,7 @@ TaskComp* TaskProjectComp::addTask(Task* task, wxPanel* control) {
     } else {
         taskComp->Hide();
     }
-    taskListComp->m_taskCompVec.push_back(taskComp);
+    taskListComp.push_back(taskComp);
     control->Refresh();
     control->Layout();
     return taskComp;
