@@ -1,6 +1,8 @@
 #include "../include/TodoList/TaskComp.hpp"
 
 #include "wx/checkbox.h"
+#include "wx/colour.h"
+#include "wx/dc.h"
 #include "wx/gdicmn.h"
 #include "wx/sizer.h"
 #include "wx/textctrl.h"
@@ -8,6 +10,8 @@
 
 #include <algorithm>
 #include <map>
+
+
 
 static void showSizer(wxBoxSizer* sizer, bool state = true);
 static void onReturnPressed(TaskComp* taskComp);
@@ -34,35 +38,37 @@ void TaskComp::allocateControls() {
 
     auto textStyle = wxTE_RICH | wxTE_LEFT | wxTE_WORDWRAP | wxTE_MULTILINE;
 
-    m_textCtrl = new wxTextCtrl(this, wxID_ANY, m_task->taskText, wxDefaultPosition,wxDefaultSize, textStyle);
+    m_textCtrl = new wxTextCtrl(this, wxID_ANY, m_task->taskText, wxDefaultPosition, wxDefaultSize, textStyle);
 }
 
 void TaskComp::setControlsLayout() {
     m_textCtrl->Hide();
     auto sizerFlags = wxSizerFlags();
-    m_mainSizer->Add(m_checkBox, sizerFlags.Border(wxALL,10));
-    m_mainSizer->Add(m_taskText, sizerFlags.Border(wxALL,10));
-    m_mainSizer->Add(m_textCtrl, sizerFlags.Expand().Border(wxALL,10));
+    m_mainSizer->Add(m_checkBox, sizerFlags.Border(wxALL, 10));
+    m_mainSizer->Add(m_taskText, sizerFlags.Border(wxALL, 10));
+    m_mainSizer->Add(m_textCtrl, sizerFlags.Border(wxALL, 10));
 }
 
 void TaskComp::setBindings() {
     this->Bind(wxEVT_LEFT_DCLICK, &TaskComp::onPanelDoubleLeftClick, this);
+    Bind(wxEVT_PAINT, &TaskComp::onPaint, this);
     m_textCtrl->Bind(
         wxEVT_KEY_DOWN, [this](wxKeyEvent& ev) { std::invoke(&TaskComp::onKeyPressedTextCtrl, this, std::ref(ev)); },
         m_textCtrl->GetId());
 }
 
 void TaskComp::setStyle() {
-    SetBackgroundColour(wxColor(242, 233, 222));
+    SetBackgroundColour(wxTransparentColor);
     m_textCtrl->SetBackgroundColour(GetBackgroundColour());
-    SetWindowStyle(GetWindowStyle() | wxBORDER_DOUBLE);
+    SetWindowStyle(GetWindowStyle() | wxNO_BORDER);
 }
 
-void TaskComp::onPanelDoubleLeftClick(wxMouseEvent&) {
+void TaskComp::onPanelDoubleLeftClick(wxMouseEvent& ev) {
     auto& children = m_mainSizer->GetChildren();
     std::for_each(children.begin(), children.end(), [](auto& child) { child->Show(false); });
     m_textCtrl->Show();
     m_textCtrl->SetFocus();
+    ev.Skip();
 }
 
 void TaskComp::onKeyPressedTextCtrl(wxKeyEvent& keyEv) {
@@ -106,6 +112,16 @@ static void onReturnPressed(TaskComp* taskComp) {
     showSizer(taskComp->m_mainSizer, true);
     taskComp->m_textCtrl->Hide();
     taskComp->m_taskText->SetLabel(taskComp->m_textCtrl->GetValue());
+}
+
+void TaskComp::onPaint(wxPaintEvent& ev) {
+    wxPaintDC dc(this);
+
+    // Draw the background
+    auto color = wxColor(250, 250, 250);
+    dc.SetBrush(color);
+    dc.SetPen(*wxTRANSPARENT_PEN);
+    dc.DrawRoundedRectangle(wxRect(wxDefaultPosition, GetSize()), 10);
 }
 
 void TaskComp::show() {

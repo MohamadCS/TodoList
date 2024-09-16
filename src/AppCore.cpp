@@ -27,7 +27,7 @@ TaskList* AppCore::newTaskList(TaskList&& taskList) {
 }
 
 std::uint32_t AppCore::generateProjectId(){
-    return m_currentProjectId++;
+    return m_projectIdCtr++;
 }
 
 void AppCore::setCurrentProjectId(std::uint32_t newProjectId){

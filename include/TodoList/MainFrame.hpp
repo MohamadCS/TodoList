@@ -6,8 +6,8 @@
 #include "wx/gdicmn.h"
 #include "wx/generic/panelg.h"
 #include "wx/log.h"
-#include "wx/osx/stattext.h"
 #include "wx/scrolwin.h"
+#include "wx/splitter.h"
 
 #include <cstdint>
 #include <map>
@@ -24,14 +24,13 @@ struct Sidebar {
 
     wxPanel* sideBarPanel;
     wxPanel* homePanel;
-    wxPanel* projectsPanel;
+    wxScrolled<wxPanel>* projectsPanel;
 
     wxButton* addProjectButton;
-
+    wxStaticText* myProjectsText;
 
     TaskProjectComp* todayProject;
     TaskProjectComp* inboxProject;
-
 
     std::map<std::uint32_t, TaskProjectComp*> projectList;
 };
@@ -56,7 +55,7 @@ public:
     ~MainFrame() override = default;
 
 private:
-    wxBoxSizer* m_mainBoxSizer;
+    wxSplitterWindow* m_mainSplitter;
     wxPanel* m_mainPanel;
     Sidebar m_sidebar;
     TaskPanel m_taskPanel;
@@ -70,23 +69,31 @@ private:
     void addTaskPanel();
     void addSidebar();
     void setProject(TaskProjectComp*);
+    void onAddProjectButtonClicked(wxCommandEvent&);
+    void onAddTaskButtonClicked(wxCommandEvent&);
 };
 
 template <class... Args>
 MainFrame::MainFrame(Args... args)
     : wxFrame(std::forward<Args>(args)...) {
 
-    m_mainBoxSizer = new wxBoxSizer(wxHORIZONTAL);
+    // m_mainSplitter = new wxBoxSizer(wxHORIZONTAL);
+    m_mainSplitter =
+        new wxSplitterWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_BORDER | wxSP_LIVE_UPDATE);
+
+    m_mainSplitter->SetMinimumPaneSize(200);
+    m_mainSplitter->SetSashPosition(200);
+    m_mainSplitter->SetSashGravity(0);
 
     addSidebar();
     addTaskPanel();
 
-    SetSizerAndFit(m_mainBoxSizer);
-    SetClientSize(DEFAULT_FRAME_DIMS);
+    m_mainSplitter->SplitVertically(m_sidebar.sideBarPanel, m_taskPanel.taskPanel);
 
-    SetBackgroundColour(wxColor(250, 244, 237));
-    Refresh();
     Layout();
-
+    SetClientSize(DEFAULT_FRAME_DIMS);
+    SetMinClientSize(DEFAULT_FRAME_DIMS);
+    m_mainSplitter->SetBackgroundColour(wxColor(255, 255, 255));
+    SetBackgroundColour(wxColor(255, 255, 255));
     Bind(EVT_CHANGE_PROJECT, &MainFrame::onProjectChange, this);
 }

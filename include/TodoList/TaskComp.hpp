@@ -41,6 +41,7 @@ public:
     void onKeyPressedTextCtrl(wxKeyEvent&);
     void onPanelDoubleLeftClick(wxMouseEvent&);
     void cancelTextInsertion();
+    void onPaint(wxPaintEvent& event);
 
     TaskComp(wxWindow* parent, wxWindowID id, Task* taskPtr,
              const wxPoint& postion = wxDefaultPosition,

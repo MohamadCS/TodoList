@@ -4,10 +4,9 @@ CFLAGS=
 INCLUDE_DIR=./include/TodoList
 SRC_DIR = ./src
 BUILD_DIR = ./build
-LINK = $(shell ~/Developer/CppLibraries/wxWidgets/macbuild/wx-config --cxxflags --libs) # change for general use
+LINK = $(shell ~/Developer/CppLibraries/wxWidgets/macbuild/wx-config --cxxflags --libs)
 CC= $(COMPILER) $(VERSION)
 TARGET=TodoList
-
 
 SOURCES = $(wildcard $(SRC_DIR)/*.cpp)
 OBJECTS = $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SOURCES))

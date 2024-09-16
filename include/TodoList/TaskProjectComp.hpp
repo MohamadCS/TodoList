@@ -13,13 +13,16 @@
 
 struct TaskProjectComp : public wxPanel {
     wxBoxSizer* mainSizer;
-    TaskCompList* taskListComp;
+    std::unique_ptr<TaskCompList> taskListComp; 
     wxStaticText* projectNameText;
     wxString projectName;
+    bool isCurrentProject;
 
     wxColor unselectedColor; 
     wxColor selectedColor; 
     wxColor textColor;
+
+    inline static const wxSizerFlags SIZER_FLAGS  = wxSizerFlags().Proportion(0).Expand().Border(wxALL, 10);
 
     std::uint32_t projectId;
 
@@ -27,14 +30,16 @@ struct TaskProjectComp : public wxPanel {
                     TaskList* taskList = nullptr, const wxPoint& postion = wxDefaultPosition,
                     const wxSize& size = DEFAULT_SIZE);
 
-    inline static const wxSize DEFAULT_SIZE = wxSize(200,50);
+    inline static const wxSize DEFAULT_SIZE = wxSize(50,50);
 
     void onPanelLeftClick(wxMouseEvent&);
     void select(wxBoxSizer*);
     void unselect(wxBoxSizer*);
-    void addTask(Task* newTask, wxPanel*);
+    TaskComp* addTask(Task* newTask, wxPanel*);
 
     void allocateControls();
+    void onPaint(wxPaintEvent&);
+    void paintNow();
     void setControlsLayout();
     void setBindings();
     void setStyle();
