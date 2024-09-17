@@ -8,6 +8,8 @@
 #include "wx/textctrl.h"
 #include <cstdint>
 #include <sys/types.h>
+#include <unistd.h>
+#include <wx/button.h>
 #include <wx/log.h>
 
 #include <algorithm>
@@ -31,6 +33,8 @@ TaskComp::TaskComp(wxWindow* parent, wxWindowID id, Task* taskPtr, std::pair<uin
     setBindings();
     setStyle();
     SetSizerAndFit(mainSizer);
+    Layout();
+    Refresh();
 }
 
 void TaskComp::allocateControls() {
@@ -40,9 +44,11 @@ void TaskComp::allocateControls() {
 
     taskText = new wxStaticText(this, wxID_ANY, task->taskText);
 
-    auto textStyle = wxTE_RICH | wxTE_LEFT | wxTE_WORDWRAP | wxTE_MULTILINE;
+    auto textStyle = wxTE_RICH | wxTE_LEFT | wxTE_NO_VSCROLL| wxTE_MULTILINE | wxTE_WORDWRAP;
 
-    textCtrl = new wxTextCtrl(this, wxID_ANY, task->taskText, wxDefaultPosition, wxDefaultSize, textStyle);
+    textCtrl = new wxTextCtrl(this, wxID_ANY, task->taskText, wxDefaultPosition, GetSize(), textStyle);
+
+    duoDateText = new wxStaticText(this, wxID_ANY, "No Date");
 }
 
 void TaskComp::setControlsLayout() {
@@ -50,13 +56,17 @@ void TaskComp::setControlsLayout() {
     auto sizerFlags = wxSizerFlags();
     mainSizer->Add(checkBox, sizerFlags.Border(wxALL, 10));
     mainSizer->Add(taskText, sizerFlags.Border(wxALL, 10));
-    mainSizer->Add(textCtrl, sizerFlags.Border(wxALL, 10));
+    mainSizer->Add(textCtrl, sizerFlags.Expand().FixedMinSize());
+    mainSizer->AddStretchSpacer(5);
+    mainSizer->Add(duoDateText, sizerFlags.Border(wxALL, 10));
+    mainSizer->AddStretchSpacer(1);
 }
 
 void TaskComp::setBindings() {
     this->Bind(wxEVT_LEFT_DCLICK, &TaskComp::onPanelDoubleLeftClick, this);
+    duoDateText->Bind(wxEVT_LEFT_DCLICK, &TaskComp::onDuoDateDoubleLeftClick, this);
     Bind(wxEVT_PAINT, &TaskComp::onPaint, this);
-    checkBox->Bind(wxEVT_COMMAND_CHECKBOX_CLICKED, &TaskComp::onCheckBoxClick,this);
+    checkBox->Bind(wxEVT_COMMAND_CHECKBOX_CLICKED, &TaskComp::onCheckBoxClick, this);
     textCtrl->Bind(
         wxEVT_KEY_DOWN, [this](wxKeyEvent& ev) { std::invoke(&TaskComp::onKeyPressedTextCtrl, this, std::ref(ev)); },
         textCtrl->GetId());
@@ -129,7 +139,7 @@ void TaskComp::onPaint(wxPaintEvent& ev) {
     dc.DrawRoundedRectangle(wxRect(wxDefaultPosition, GetSize()), 10);
 }
 
-void TaskComp::onCheckBoxClick(wxCommandEvent& ev){
+void TaskComp::onCheckBoxClick(wxCommandEvent& ev) {
     // Propogate "CheckBoxEvent"
     wxLogDebug("Checkbox Clicked");
     task->checked = true;
@@ -139,4 +149,13 @@ void TaskComp::onCheckBoxClick(wxCommandEvent& ev){
     this->GetParent()->Layout();
     this->GetParent()->Refresh();
     ev.Skip();
+}
+
+void TaskComp::onDuoDateDoubleLeftClick(wxMouseEvent& ev) {
+    wxLogDebug("Duo date double left clicked");
+    wxCommandEvent projectChangeEvent{EVT_REQUEST_CAL_DIALOG};
+    projectChangeEvent.SetClientData(new std::pair<TaskComp*, ChangingDate>{this, ChangingDate::DUO_DATE});
+    wxPostEvent(this, std::move(projectChangeEvent));
+    this->GetParent()->Layout();
+    this->GetParent()->Refresh();
 }

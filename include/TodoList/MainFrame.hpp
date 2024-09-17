@@ -2,12 +2,14 @@
 
 #include "Events.hpp"
 #include "TaskProjectComp.hpp"
+#include "wx/calctrl.h"
 #include "wx/colour.h"
 #include "wx/gdicmn.h"
 #include "wx/generic/panelg.h"
 #include "wx/log.h"
 #include "wx/scrolwin.h"
 #include "wx/splitter.h"
+#include <wx/dialog.h>
 
 #include <utility>
 
@@ -45,6 +47,15 @@ struct TaskPanel {
     TaskProjectComp* currentTaskCompList = nullptr;
 };
 
+struct CalanderDialog {
+    wxDialog* dialog;
+    wxButton* doneButton;
+    wxButton* cancelButton;
+    wxCalendarCtrl* calender;
+    wxBoxSizer* mainSizer;
+    std::pair<TaskComp*, TaskComp::ChangingDate>* currentTaskPair = nullptr;
+};
+
 class MainFrame : public wxFrame {
 public:
     template <class... Args>
@@ -57,11 +68,13 @@ private:
     wxPanel* m_mainPanel;
     Sidebar m_sidebar;
     TaskPanel m_taskPanel;
+    CalanderDialog m_calDialog;
     const wxSize DEFAULT_FRAME_DIMS = wxSize(800, 600);
     const int SIDEBAR_WIDTH = 200;
 
     void addTaskPanel();
     void addSidebar();
+    void addDialog();
     void setProject(TaskProjectComp*);
 
     void refreshSidebar();
@@ -72,6 +85,8 @@ private:
     void onTaskChecked(wxCommandEvent&);
     void onAddProjectButtonClicked(wxCommandEvent&);
     void onAddTaskButtonClicked(wxCommandEvent&);
+    void onCalDialogRequest(wxCommandEvent&);
+    void onCalDialogDonePressed(wxCommandEvent&);
 };
 
 template <class... Args>
@@ -87,6 +102,7 @@ MainFrame::MainFrame(Args... args)
 
     addSidebar();
     addTaskPanel();
+    addDialog();
 
     m_mainSplitter->SplitVertically(m_sidebar.sideBarPanel, m_taskPanel.taskPanel);
 
@@ -97,5 +113,6 @@ MainFrame::MainFrame(Args... args)
     SetBackgroundColour(wxColor(255, 255, 255));
     Bind(EVT_CHANGE_PROJECT, &MainFrame::onProjectChange, this);
     Bind(EVT_TASK_FINISHED, &MainFrame::onTaskChecked, this);
+    Bind(EVT_REQUEST_CAL_DIALOG, &MainFrame::onCalDialogRequest, this);
     setProject(m_sidebar.inboxProject);
 }

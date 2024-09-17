@@ -2,15 +2,24 @@
 #include "../include/TodoList/AppCore.hpp"
 #include "../include/TodoList/TaskComp.hpp"
 
+#include <chrono>
+#include <ctime>
+#include <format>
+#include <iomanip>
+#include <string>
+
+#include "wx/calctrl.h"
 #include "wx/event.h"
 #include "wx/log.h"
 #include "wx/osx/stattext.h"
 #include "wx/sizer.h"
-#include <string>
+#include <utility>
 #include <wx/button.h>
 #include <wx/panel.h>
 #include <wx/scrolwin.h>
 #include <wx/statline.h>
+
+static TimePoint wxDateTimeToChrono(const wxDateTime& wxDate);
 
 void MainFrame::refreshSidebar() {
     m_sidebar.homePanel->Layout();
@@ -36,7 +45,7 @@ void MainFrame::addTaskPanel() {
     m_taskPanel.topPanel = new wxPanel(m_taskPanel.taskPanel);
     m_taskPanel.bottomPanel = new wxScrolled<wxPanel>(m_taskPanel.taskPanel);
 
-    m_taskPanel.bottomPanel->SetScrollRate(10, 10);
+    m_taskPanel.bottomPanel->SetScrollRate(10, 10); // change to 0 horizontal scroll
 
     m_taskPanel.taskPanel->SetName("Task Panel");
 
@@ -79,7 +88,7 @@ void MainFrame::addSidebar() {
     m_sidebar.homePanel = new wxPanel(m_sidebar.sideBarPanel, wxID_ANY, wxDefaultPosition);
     m_sidebar.projectsPanel = new wxScrolled<wxPanel>(m_sidebar.sideBarPanel, wxID_ANY, wxDefaultPosition);
 
-    m_sidebar.projectsPanel->SetScrollRate(10, 10);
+    m_sidebar.projectsPanel->SetScrollRate(10, 10); // change to 0 horizontal scroll
 
     m_sidebar.projectsPanel->SetName("Projects Panel");
     m_sidebar.homePanel->SetName("Home Panel");
@@ -119,6 +128,37 @@ void MainFrame::addSidebar() {
 
     refreshSidebar();
     wxLogDebug("Finished Sidebar");
+}
+
+void MainFrame::addDialog() {
+    // Allocating Controls
+    m_calDialog.dialog = new wxDialog(this, wxID_ANY, "Set Date");
+    m_calDialog.mainSizer = new wxBoxSizer(wxVERTICAL);
+    m_calDialog.calender = new wxCalendarCtrl(m_calDialog.dialog, wxID_ANY);
+    m_calDialog.doneButton = new wxButton(m_calDialog.dialog, wxID_ANY, "Done");
+    m_calDialog.cancelButton = new wxButton(m_calDialog.dialog, wxID_ANY, "Cancel");
+
+    m_calDialog.dialog->SetSize(wxSize(m_calDialog.calender->GetSize().x, 300));
+
+    auto* buttonSizer = new wxBoxSizer(wxHORIZONTAL);
+
+    m_calDialog.mainSizer->Add(m_calDialog.calender, wxSizerFlags().Expand().Proportion(2));
+    m_calDialog.mainSizer->Add(buttonSizer, wxSizerFlags().Expand().Proportion(1));
+
+    m_calDialog.mainSizer->AddStretchSpacer(1);
+
+    buttonSizer->AddStretchSpacer(2);
+    buttonSizer->Add(m_calDialog.doneButton, wxSizerFlags(1));
+    buttonSizer->AddStretchSpacer(1);
+    buttonSizer->Add(m_calDialog.cancelButton, wxSizerFlags(1));
+    buttonSizer->AddStretchSpacer(2);
+
+    m_calDialog.dialog->SetSizer(m_calDialog.mainSizer);
+    m_calDialog.calender->SetDate(wxDateTime::Today());
+
+    m_calDialog.doneButton->Bind(wxEVT_BUTTON, [this](wxCommandEvent& ev) {
+        std::invoke(&MainFrame::onCalDialogDonePressed, this, std::ref(ev));
+    });
 }
 
 void MainFrame::onProjectChange(wxCommandEvent& ev) {
@@ -182,11 +222,76 @@ void MainFrame::onTaskChecked(wxCommandEvent& ev) {
     auto* taskCompPtr = static_cast<TaskComp*>(ev.GetClientData());
 
     if (taskCompPtr == nullptr) {
-        wxLogDebug("Nullptr");
+        wxLogDebug("Nullptr from %s", __FUNCTION__);
     }
 
     m_taskPanel.bottomBoxSizer->Detach(taskCompPtr);
     taskCompPtr->Hide();
     refreshTaskPanel();
     refreshSidebar();
+}
+
+void MainFrame::onCalDialogRequest(wxCommandEvent& ev) {
+    wxLogDebug("Cal Dialog Requested");
+    auto* taskCompPtr = static_cast<std::pair<TaskComp*, TaskComp::ChangingDate>*>(ev.GetClientData());
+
+    if (taskCompPtr == nullptr || taskCompPtr->first == nullptr) {
+        wxLogDebug("Task must not be null");
+    }
+    m_calDialog.currentTaskPair = taskCompPtr;
+    m_calDialog.calender->SetDate(wxDateTime::Today());
+    m_calDialog.dialog->Show();
+}
+
+void MainFrame::onCalDialogDonePressed(wxCommandEvent& ev) {
+    wxLogDebug("Date change done button pressed");
+    if (m_calDialog.currentTaskPair == nullptr) {
+        wxLogDebug("nullptr from %s", __FUNCTION__);
+    }
+    auto [taskCompPtr, dateChanging] = *m_calDialog.currentTaskPair;
+    auto calDate = m_calDialog.calender->GetDate();
+    auto calDateChrono = wxDateTimeToChrono(calDate);
+    wxStaticText* staticTextPtr = nullptr;
+    TimePoint* timePointPtr = nullptr;
+    switch (dateChanging) {
+    case TaskComp::ChangingDate::DUO_DATE:
+        staticTextPtr = taskCompPtr->duoDateText;
+        timePointPtr = &taskCompPtr->task->duoDate;
+        break;
+    case TaskComp::ChangingDate::DEADLINE_DATE:
+        staticTextPtr = taskCompPtr->deadLineText;
+        timePointPtr = &taskCompPtr->task->deadLine;
+        break;
+    default:
+        std::unreachable();
+        break;
+    };
+
+    if (staticTextPtr == nullptr || timePointPtr == nullptr) {
+        wxLogDebug("Got nullptr");
+        exit(0);
+    }
+
+    *timePointPtr = calDateChrono;
+    staticTextPtr->SetLabel(std::format("{:%d %B}", *timePointPtr));
+
+    staticTextPtr->Refresh();
+    staticTextPtr->Layout();
+
+    taskCompPtr->Layout();
+    taskCompPtr->Refresh();
+
+    m_calDialog.dialog->Hide();
+    ev.Skip();
+}
+
+static TimePoint wxDateTimeToChrono(const wxDateTime& wxDate) {
+    std::tm tm{};
+
+    tm.tm_year = wxDate.GetYear();
+    tm.tm_mon = wxDate.GetMonth();
+    tm.tm_mday = wxDate.GetDay();
+
+    std::time_t time_t_date = std::mktime(&tm);
+    return std::chrono::system_clock::from_time_t(time_t_date);
 }
