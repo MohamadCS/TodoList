@@ -1,8 +1,8 @@
 #include "../include/TodoList/TaskComp.hpp"
 
-#include "wx/checkbox.h"
 #include "wx/colour.h"
 #include "wx/dc.h"
+#include "wx/event.h"
 #include "wx/gdicmn.h"
 #include "wx/sizer.h"
 #include "wx/textctrl.h"
@@ -13,18 +13,17 @@
 #include <algorithm>
 #include <map>
 
-
-
 static void showSizer(wxBoxSizer* sizer, bool state = true);
 static void onReturnPressed(TaskComp* taskComp);
 static void onEscapePressed(TaskComp* taskComp);
+static void onEscapePressed(TaskComp* taskComp);
 
-TaskComp::TaskComp(wxWindow* parent, wxWindowID id, Task* taskPtr,std::pair<uint32_t,TaskProjectComp*> taskProject ,const wxPoint& postion, const wxSize& size)
+TaskComp::TaskComp(wxWindow* parent, wxWindowID id, Task* taskPtr, std::pair<uint32_t, TaskProjectComp*> taskProject,
+                   const wxPoint& postion, const wxSize& size)
     : wxPanel(parent, id, postion, size),
-      task(taskPtr)
-       {
+      task(taskPtr) {
 
-    taskProjects.insert_or_assign(taskProject.first,taskProject.second);
+    taskProjects.insert_or_assign(taskProject.first, taskProject.second);
     SetName("Task");
     SetMinSize(DEFAULT_SIZE);
     allocateControls();
@@ -57,6 +56,7 @@ void TaskComp::setControlsLayout() {
 void TaskComp::setBindings() {
     this->Bind(wxEVT_LEFT_DCLICK, &TaskComp::onPanelDoubleLeftClick, this);
     Bind(wxEVT_PAINT, &TaskComp::onPaint, this);
+    checkBox->Bind(wxEVT_COMMAND_CHECKBOX_CLICKED, &TaskComp::onCheckBoxClick,this);
     textCtrl->Bind(
         wxEVT_KEY_DOWN, [this](wxKeyEvent& ev) { std::invoke(&TaskComp::onKeyPressedTextCtrl, this, std::ref(ev)); },
         textCtrl->GetId());
@@ -85,9 +85,9 @@ void TaskComp::onKeyPressedTextCtrl(wxKeyEvent& keyEv) {
     if (auto handlerIt = keyToHandler.find(keyEv.GetKeyCode()); handlerIt != keyToHandler.end()) {
         auto [_, handler] = *handlerIt;
         std::invoke(handler, this);
-    } else {
-        keyEv.Skip();
     }
+
+    keyEv.Skip();
 }
 
 static void showSizer(wxBoxSizer* sizer, bool state) {
@@ -129,3 +129,14 @@ void TaskComp::onPaint(wxPaintEvent& ev) {
     dc.DrawRoundedRectangle(wxRect(wxDefaultPosition, GetSize()), 10);
 }
 
+void TaskComp::onCheckBoxClick(wxCommandEvent& ev){
+    // Propogate "CheckBoxEvent"
+    wxLogDebug("Checkbox Clicked");
+    task->checked = true;
+    wxCommandEvent projectChangeEvent{EVT_TASK_FINISHED};
+    projectChangeEvent.SetClientData(this);
+    wxPostEvent(this, std::move(projectChangeEvent));
+    this->GetParent()->Layout();
+    this->GetParent()->Refresh();
+    ev.Skip();
+}

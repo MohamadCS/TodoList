@@ -9,8 +9,6 @@
 #include "wx/scrolwin.h"
 #include "wx/splitter.h"
 
-#include <cstdint>
-#include <map>
 #include <utility>
 
 #include <wx/event.h>
@@ -32,7 +30,7 @@ struct Sidebar {
     TaskProjectComp* todayProject;
     TaskProjectComp* inboxProject;
 
-    std::map<std::uint32_t, TaskProjectComp*> projectList;
+    std::vector<TaskProjectComp*> projectsList;
 };
 
 struct TaskPanel {
@@ -62,13 +60,16 @@ private:
     const wxSize DEFAULT_FRAME_DIMS = wxSize(800, 600);
     const int SIDEBAR_WIDTH = 200;
 
-    void setupTaskPanel();
-    void setupSideBar();
-    void onProjectChange(wxCommandEvent&);
-    void test();
     void addTaskPanel();
     void addSidebar();
     void setProject(TaskProjectComp*);
+
+    void refreshSidebar();
+    void refreshTaskPanel();
+
+    // Events
+    void onProjectChange(wxCommandEvent&);
+    void onTaskChecked(wxCommandEvent&);
     void onAddProjectButtonClicked(wxCommandEvent&);
     void onAddTaskButtonClicked(wxCommandEvent&);
 };
@@ -77,7 +78,6 @@ template <class... Args>
 MainFrame::MainFrame(Args... args)
     : wxFrame(std::forward<Args>(args)...) {
 
-    // m_mainSplitter = new wxBoxSizer(wxHORIZONTAL);
     m_mainSplitter =
         new wxSplitterWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_BORDER | wxSP_LIVE_UPDATE);
 
@@ -96,4 +96,6 @@ MainFrame::MainFrame(Args... args)
     m_mainSplitter->SetBackgroundColour(wxColor(255, 255, 255));
     SetBackgroundColour(wxColor(255, 255, 255));
     Bind(EVT_CHANGE_PROJECT, &MainFrame::onProjectChange, this);
+    Bind(EVT_TASK_FINISHED, &MainFrame::onTaskChecked, this);
+    setProject(m_sidebar.inboxProject);
 }

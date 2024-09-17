@@ -46,6 +46,7 @@ TaskProjectComp::TaskProjectComp(wxWindow* parent, wxWindowID id, std::uint32_t 
     SetBackgroundColour(unselectedColor);
 }
 
+
 void TaskProjectComp::onPanelLeftClick(wxMouseEvent& ev) {
     auto& appCore = AppCore::instance();
 
@@ -71,7 +72,9 @@ void TaskProjectComp::select(wxBoxSizer* sizer) {
     };
 
     for (auto* taskCompPtr : taskListComp) {
-        add_comp(taskCompPtr);
+        if(!taskCompPtr->task->checked){
+            add_comp(taskCompPtr);
+        }
     }
 
     isCurrentProject = true;
@@ -91,8 +94,8 @@ void TaskProjectComp::unselect(wxBoxSizer* sizer) {
     };
 
     for (auto* taskCompPtr : taskListComp) {
-        taskCompPtr->cancelTextInsertion();
-        detach_comp(taskCompPtr);
+            taskCompPtr->cancelTextInsertion();
+            detach_comp(taskCompPtr);
     }
 
     isCurrentProject = false;
@@ -119,7 +122,6 @@ TaskComp* TaskProjectComp::addTask(Task* task, wxPanel* control) {
 void TaskProjectComp::onPaint(wxPaintEvent&) {
     wxPaintDC dc(this);
 
-    // Draw the background
     auto color = isCurrentProject ? selectedColor : unselectedColor;
     dc.SetBrush(color);
     dc.SetPen(*wxTRANSPARENT_PEN);
