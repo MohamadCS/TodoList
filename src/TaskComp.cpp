@@ -44,7 +44,7 @@ void TaskComp::allocateControls() {
 
     taskText = new wxStaticText(this, wxID_ANY, task->taskText);
 
-    auto textStyle = wxTE_RICH | wxTE_LEFT | wxTE_NO_VSCROLL| wxTE_MULTILINE | wxTE_WORDWRAP;
+    auto textStyle = wxTE_RICH | wxTE_LEFT | wxTE_NO_VSCROLL | wxTE_MULTILINE | wxTE_WORDWRAP;
 
     textCtrl = new wxTextCtrl(this, wxID_ANY, task->taskText, wxDefaultPosition, GetSize(), textStyle);
 
@@ -66,7 +66,7 @@ void TaskComp::setBindings() {
     this->Bind(wxEVT_LEFT_DCLICK, &TaskComp::onPanelDoubleLeftClick, this);
     duoDateText->Bind(wxEVT_LEFT_DCLICK, &TaskComp::onDuoDateDoubleLeftClick, this);
     Bind(wxEVT_PAINT, &TaskComp::onPaint, this);
-    checkBox->Bind(wxEVT_COMMAND_CHECKBOX_CLICKED, &TaskComp::onCheckBoxClick, this);
+    checkBox->Bind(wxEVT_CHECKBOX, &TaskComp::onCheckBoxClick, this);
     textCtrl->Bind(
         wxEVT_KEY_DOWN, [this](wxKeyEvent& ev) { std::invoke(&TaskComp::onKeyPressedTextCtrl, this, std::ref(ev)); },
         textCtrl->GetId());
@@ -148,7 +148,6 @@ void TaskComp::onCheckBoxClick(wxCommandEvent& ev) {
     wxPostEvent(this, std::move(projectChangeEvent));
     this->GetParent()->Layout();
     this->GetParent()->Refresh();
-    ev.Skip();
 }
 
 void TaskComp::onDuoDateDoubleLeftClick(wxMouseEvent& ev) {

@@ -1,13 +1,11 @@
 #include "../include/TodoList/TaskProjectComp.hpp"
 #include "wx/colour.h"
-#include "wx/osx/stattext.h"
 #include <memory>
 #include <optional>
 #include <wx/checkbox.h>
 #include <wx/event.h>
 #include <wx/gdicmn.h>
 #include <wx/log.h>
-#include <wx/osx/window.h>
 #include <wx/sizer.h>
 #include <wx/window.h>
 

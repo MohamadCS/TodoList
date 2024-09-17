@@ -4,6 +4,7 @@
 #include "Events.hpp"
 #include <cstdint>
 #include <map>
+#include <variant>
 
 #include "wx/event.h"
 #include <wx/checkbox.h>
@@ -13,7 +14,6 @@
 #include <wx/stattext.h>
 #include <wx/textctrl.h>
 #include <wx/window.h>
-
 
 struct TaskProjectComp;
 struct TaskComp : public wxPanel {
@@ -26,7 +26,6 @@ public:
     wxCheckBox* checkBox;
     wxBoxSizer* mainSizer;
     std::map<uint32_t, TaskProjectComp*> taskProjects;
-
 
     void setStyle();
     void setBindings();
@@ -46,5 +45,5 @@ public:
 
     inline static const wxSize DEFAULT_SIZE = wxSize(200, 200);
 
-    enum class ChangingDate{DUO_DATE, DEADLINE_DATE};
+    enum class ChangingDate { DUO_DATE, DEADLINE_DATE };
 };

@@ -2,8 +2,6 @@
 
 #include "Events.hpp"
 #include "TaskComp.hpp"
-#include "wx/generic/panelg.h"
-#include "wx/osx/stattext.h"
 
 #include <cstdint>
 

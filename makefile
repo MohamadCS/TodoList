@@ -4,7 +4,7 @@ CFLAGS=
 INCLUDE_DIR=./include/TodoList
 SRC_DIR = ./src
 BUILD_DIR = ./build
-LINK = $(shell ~/Developer/CppLibraries/wxWidgets/macbuild/wx-config --cxxflags --libs)
+WX_WIDGETS_LINK = $(shell ~/Developer/CppLibraries/wxWidgets/macbuild/wx-config --cxxflags --libs)
 CC= $(COMPILER) $(VERSION)
 TARGET=TodoList
 
@@ -20,10 +20,10 @@ leaks: $(BUILD_DIR)/$(TARGET)
 	leaks -atExit -- $(BUILD_DIR)/$(TARGET)
 
 $(BUILD_DIR)/$(TARGET): $(OBJECTS)
-	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $(LINK)
+	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $(WX_WIDGETS_LINK)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
-	$(CC) $(CFLAGS) $(INCLUDE_DIR) -c $< -o $@ $(LINK) 
+	$(CC) $(CFLAGS) $(INCLUDE_DIR) -c $< -o $@ $(WX_WIDGETS_LINK) 
 
 clean:
 	rm -f $(BUILD_DIR)/*.o $(BUILD_DIR)/program

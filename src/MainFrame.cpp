@@ -11,7 +11,6 @@
 #include "wx/calctrl.h"
 #include "wx/event.h"
 #include "wx/log.h"
-#include "wx/osx/stattext.h"
 #include "wx/sizer.h"
 #include <utility>
 #include <wx/button.h>
