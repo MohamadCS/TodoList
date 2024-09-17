@@ -8,6 +8,7 @@ WX_WIDGETS_LINK = $(shell ~/Developer/CppLibraries/wxWidgets/macbuild/wx-config 
 CC= $(COMPILER) $(VERSION)
 TARGET=TodoList
 
+# test
 SOURCES = $(wildcard $(SRC_DIR)/*.cpp)
 OBJECTS = $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SOURCES))
 
