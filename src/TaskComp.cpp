@@ -56,7 +56,7 @@ void TaskComp::setControlsLayout() {
     auto sizerFlags = wxSizerFlags();
     mainSizer->Add(checkBox, sizerFlags.Border(wxALL, 10));
     mainSizer->Add(taskText, sizerFlags.Border(wxALL, 10));
-    mainSizer->Add(textCtrl, sizerFlags.Expand().FixedMinSize());
+    mainSizer->Add(textCtrl, sizerFlags.Border(wxALL, 10));
     mainSizer->AddStretchSpacer(5);
     mainSizer->Add(duoDateText, sizerFlags.Border(wxALL, 10));
     mainSizer->AddStretchSpacer(1);

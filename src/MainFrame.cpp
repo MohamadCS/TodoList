@@ -5,14 +5,14 @@
 #include <chrono>
 #include <ctime>
 #include <format>
-#include <iomanip>
 #include <string>
+#include <utility>
 
 #include "wx/calctrl.h"
 #include "wx/event.h"
+#include "wx/gdicmn.h"
 #include "wx/log.h"
 #include "wx/sizer.h"
-#include <utility>
 #include <wx/button.h>
 #include <wx/panel.h>
 #include <wx/scrolwin.h>
@@ -21,6 +21,7 @@
 static TimePoint wxDateTimeToChrono(const wxDateTime& wxDate);
 
 void MainFrame::refreshSidebar() {
+    wxLogDebug("Refreshing Sidebar");
     m_sidebar.homePanel->Layout();
     m_sidebar.homePanel->Refresh();
     m_sidebar.projectsPanel->Layout();
@@ -30,6 +31,7 @@ void MainFrame::refreshSidebar() {
 }
 
 void MainFrame::refreshTaskPanel() {
+    wxLogDebug("Refreshing Task Panel");
     m_taskPanel.taskPanel->Layout();
     m_taskPanel.taskPanel->Refresh();
 }
@@ -129,9 +131,9 @@ void MainFrame::addSidebar() {
     wxLogDebug("Finished Sidebar");
 }
 
-void MainFrame::addDialog() {
-    // Allocating Controls
-    m_calDialog.dialog = new wxDialog(this, wxID_ANY, "Set Date");
+void MainFrame::addCalDialog() {
+    wxLogDebug("Adding Cal Dialog");
+    m_calDialog.dialog = new wxDialog(this, wxID_ANY, "Set Date", wxDefaultPosition, wxDefaultSize);
     m_calDialog.mainSizer = new wxBoxSizer(wxVERTICAL);
     m_calDialog.calender = new wxCalendarCtrl(m_calDialog.dialog, wxID_ANY);
     m_calDialog.doneButton = new wxButton(m_calDialog.dialog, wxID_ANY, "Done");
@@ -239,7 +241,7 @@ void MainFrame::onCalDialogRequest(wxCommandEvent& ev) {
     }
     m_calDialog.currentTaskPair = taskCompPtr;
     m_calDialog.calender->SetDate(wxDateTime::Today());
-    m_calDialog.dialog->Show();
+    m_calDialog.dialog->ShowModal();
 }
 
 void MainFrame::onCalDialogDonePressed(wxCommandEvent& ev) {
@@ -280,11 +282,12 @@ void MainFrame::onCalDialogDonePressed(wxCommandEvent& ev) {
     taskCompPtr->Layout();
     taskCompPtr->Refresh();
 
-    m_calDialog.dialog->Hide();
+    m_calDialog.dialog->EndModal(0);
     ev.Skip();
 }
 
 static TimePoint wxDateTimeToChrono(const wxDateTime& wxDate) {
+    wxLogDebug("Converting time to chrono");
     std::tm tm{};
 
     tm.tm_year = wxDate.GetYear();

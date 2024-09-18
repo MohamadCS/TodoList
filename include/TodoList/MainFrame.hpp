@@ -1,8 +1,14 @@
 #pragma once
 
+
 #include "Events.hpp"
 #include "TaskProjectComp.hpp"
-#include "wx/calctrl.h"
+#include "TaskComp.hpp"
+#include "AppCore.hpp"
+
+#include <utility>
+
+#include <wx/calctrl.h>
 #include "wx/colour.h"
 #include "wx/gdicmn.h"
 #include "wx/generic/panelg.h"
@@ -11,7 +17,6 @@
 #include "wx/splitter.h"
 #include <wx/dialog.h>
 
-#include <utility>
 
 #include <wx/event.h>
 #include <wx/frame.h>
@@ -69,12 +74,14 @@ private:
     Sidebar m_sidebar;
     TaskPanel m_taskPanel;
     CalanderDialog m_calDialog;
+
     const wxSize DEFAULT_FRAME_DIMS = wxSize(800, 600);
     const int SIDEBAR_WIDTH = 200;
 
     void addTaskPanel();
     void addSidebar();
-    void addDialog();
+    void addCalDialog();
+
     void setProject(TaskProjectComp*);
 
     void refreshSidebar();
@@ -93,8 +100,7 @@ template <class... Args>
 MainFrame::MainFrame(Args... args)
     : wxFrame(std::forward<Args>(args)...) {
 
-    m_mainSplitter =
-        new wxSplitterWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_BORDER | wxSP_LIVE_UPDATE);
+    m_mainSplitter = new wxSplitterWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_LIVE_UPDATE);
 
     m_mainSplitter->SetMinimumPaneSize(200);
     m_mainSplitter->SetSashPosition(200);
@@ -102,7 +108,7 @@ MainFrame::MainFrame(Args... args)
 
     addSidebar();
     addTaskPanel();
-    addDialog();
+    addCalDialog();
 
     m_mainSplitter->SplitVertically(m_sidebar.sideBarPanel, m_taskPanel.taskPanel);
 
