@@ -17,11 +17,9 @@ public:
     bool OnInit() override;
 
 private:
-    const wxString APP_NAME = "TodoList";
-
-private:
     Views m_views;
     wxFrame* m_currentFrame;
+    const wxString APP_NAME = "TodoList";
 };
 
 wxIMPLEMENT_APP(AppGui);

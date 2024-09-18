@@ -27,6 +27,6 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	$(CC) $(CFLAGS) $(INCLUDE_DIR) -c $< -o $@ $(WX_WIDGETS_LINK) 
 
 clean:
-	rm -f $(BUILD_DIR)/*.o $(BUILD_DIR)/program
+	rm -f $(BUILD_DIR)/*.o $(BUILD_DIR)/$(TARGET)
 
 .PHONY: all clean

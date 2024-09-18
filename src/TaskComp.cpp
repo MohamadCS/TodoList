@@ -1,5 +1,6 @@
 #include "../include/TodoList/TaskComp.hpp"
 
+#include "wx/anybutton.h"
 #include "wx/colour.h"
 #include "wx/dc.h"
 #include "wx/event.h"
@@ -32,9 +33,9 @@ TaskComp::TaskComp(wxWindow* parent, wxWindowID id, Task* taskPtr, std::pair<uin
     setControlsLayout();
     setBindings();
     setStyle();
-    SetSizerAndFit(mainSizer);
-    Layout();
+    SetSizer(mainSizer);
     Refresh();
+    Layout();
 }
 
 void TaskComp::allocateControls() {
@@ -44,9 +45,9 @@ void TaskComp::allocateControls() {
 
     taskText = new wxStaticText(this, wxID_ANY, task->taskText);
 
-    auto textStyle = wxTE_RICH | wxTE_LEFT | wxTE_NO_VSCROLL | wxTE_MULTILINE | wxTE_WORDWRAP;
+    auto textStyle = wxBORDER_NONE | wxTE_WORDWRAP | wxTE_MULTILINE;
 
-    textCtrl = new wxTextCtrl(this, wxID_ANY, task->taskText, wxDefaultPosition, GetSize(), textStyle);
+    textCtrl = new wxTextCtrl(this, wxID_ANY, task->taskText, wxDefaultPosition, wxDefaultSize, textStyle);
 
     duoDateText = new wxStaticText(this, wxID_ANY, "No Date");
 }
@@ -54,12 +55,11 @@ void TaskComp::allocateControls() {
 void TaskComp::setControlsLayout() {
     textCtrl->Hide();
     auto sizerFlags = wxSizerFlags();
-    mainSizer->Add(checkBox, sizerFlags.Border(wxALL, 10));
-    mainSizer->Add(taskText, sizerFlags.Border(wxALL, 10));
-    mainSizer->Add(textCtrl, sizerFlags.Border(wxALL, 10));
-    mainSizer->AddStretchSpacer(5);
-    mainSizer->Add(duoDateText, sizerFlags.Border(wxALL, 10));
-    mainSizer->AddStretchSpacer(1);
+    mainSizer->Add(checkBox, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxALIGN_LEFT, 10);
+    mainSizer->Add(taskText, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxALIGN_LEFT, 10);
+    mainSizer->AddStretchSpacer();
+    mainSizer->Add(duoDateText, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 10);
+    mainSizer->Add(textCtrl, 1, wxALIGN_CENTER_VERTICAL | wxALL, 10);
 }
 
 void TaskComp::setBindings() {
@@ -73,8 +73,11 @@ void TaskComp::setBindings() {
 }
 
 void TaskComp::setStyle() {
+    wxFont font = textCtrl->GetFont();
+    font.SetPointSize(13);
+    textCtrl->SetFont(font);
     SetBackgroundColour(wxTransparentColor);
-    textCtrl->SetBackgroundColour(GetBackgroundColour());
+    textCtrl->SetBackgroundColour(wxColor(250, 250, 250));
     SetWindowStyle(GetWindowStyle() | wxNO_BORDER);
 }
 

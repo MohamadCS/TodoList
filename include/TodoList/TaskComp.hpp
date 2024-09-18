@@ -43,7 +43,7 @@ public:
     TaskComp(wxWindow* parent, wxWindowID id, Task* taskPtr, std::pair<uint32_t, TaskProjectComp*> taskProject,
              const wxPoint& postion = wxDefaultPosition, const wxSize& size = DEFAULT_SIZE);
 
-    inline static const wxSize DEFAULT_SIZE = wxSize(200, 200);
+    inline static const wxSize DEFAULT_SIZE = wxSize(200, 40);
 
     enum class ChangingDate { DUO_DATE, DEADLINE_DATE };
 };

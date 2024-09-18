@@ -1,6 +1,5 @@
 #include "../include/TodoList/TaskProjectComp.hpp"
 #include "wx/colour.h"
-#include <memory>
 #include <optional>
 #include <wx/checkbox.h>
 #include <wx/event.h>
