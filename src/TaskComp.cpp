@@ -44,7 +44,7 @@ void TaskComp::allocateControls() {
 
     taskText = new wxStaticText(this, wxID_ANY, task->taskText);
 
-    auto textStyle = wxBORDER_NONE | wxTE_WORDWRAP | wxTE_MULTILINE;
+    auto textStyle = wxBORDER_NONE | wxTE_WORDWRAP;
 
     textCtrl = new wxTextCtrl(this, wxID_ANY, task->taskText, wxDefaultPosition, wxDefaultSize, textStyle);
 

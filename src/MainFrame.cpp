@@ -61,7 +61,7 @@ void MainFrame::addTaskPanel() {
 
     m_taskPanel.addTaskButton = new wxButton(m_taskPanel.topPanel, wxID_ANY, "Add Task");
     // m_taskPanel.projectNameText = new wxStaticText(m_taskPanel.topPanel, wxID_ANY, "");
-    auto textStyle = wxBORDER_NONE | wxTE_WORDWRAP | wxTE_MULTILINE | wxTE_PROCESS_ENTER;
+    auto textStyle = wxBORDER_NONE | wxTE_WORDWRAP | wxTE_PROCESS_ENTER;
     m_taskPanel.projectNameTextCtrl =
         new wxTextCtrl(m_taskPanel.topPanel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, textStyle);
 
@@ -231,6 +231,9 @@ void MainFrame::onAddProjectButtonClicked(wxCommandEvent& ev) {
     wxLogDebug("Added Project with ID: %d", newProject->projectId);
     m_sidebar.projectsList.push_back(newProject);
     m_sidebar.projectsBoxSizer->Add(newProject, wxSizerFlags(0).FixedMinSize().Border(wxALL, 5).Expand());
+    setProject(newProject);
+    m_taskPanel.projectNameTextCtrl->SetFocus();
+    m_taskPanel.projectNameTextCtrl->SetInsertionPointEnd();
     refreshSidebar();
 }
 
