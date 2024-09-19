@@ -72,8 +72,6 @@ void TaskComp::setBindings() {
     textCtrl->Bind(
         wxEVT_KEY_DOWN, [this](wxKeyEvent& ev) { std::invoke(&TaskComp::onKeyPressedTextCtrl, this, std::ref(ev)); },
         textCtrl->GetId());
-
-    textCtrl->Bind(wxEVT_MOUSEWHEEL, [](TaskComp*, wxMouseEvent& ev) { ev.Skip(); }, this);
 }
 
 void TaskComp::setStyle() {
