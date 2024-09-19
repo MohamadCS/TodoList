@@ -25,7 +25,10 @@ TaskProjectComp::TaskProjectComp(wxWindow* parent, wxWindowID id, std::uint32_t 
 
     auto& appCore = AppCore::instance();
 
-    taskList = taskList.value_or(appCore.newTaskList());
+    auto* foldTaskList = taskList.value_or(appCore.newTaskList());
+
+    this->taskList = foldTaskList;
+    this->taskList->name = projectName;
 
     projectNameText =
         new wxStaticText(this, wxID_ANY, projectName, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL);
@@ -123,4 +126,12 @@ void TaskProjectComp::onPaint(wxPaintEvent&) {
     dc.SetBrush(color);
     dc.SetPen(*wxTRANSPARENT_PEN);
     dc.DrawRoundedRectangle(wxRect(wxDefaultPosition, GetSize()), 10);
+}
+
+void TaskProjectComp::setProjectName(const wxString& newName){
+    projectName = newName;
+    projectNameText->SetLabel(newName);
+    taskList->name = newName;
+    Refresh();
+    Layout();
 }

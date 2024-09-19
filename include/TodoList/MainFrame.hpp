@@ -1,22 +1,19 @@
 #pragma once
 
-
 #include "Events.hpp"
-#include "TaskProjectComp.hpp"
 #include "TaskComp.hpp"
-#include "AppCore.hpp"
+#include "TaskProjectComp.hpp"
 
 #include <utility>
 
-#include <wx/calctrl.h>
 #include "wx/colour.h"
 #include "wx/gdicmn.h"
 #include "wx/generic/panelg.h"
 #include "wx/log.h"
 #include "wx/scrolwin.h"
 #include "wx/splitter.h"
+#include <wx/calctrl.h>
 #include <wx/dialog.h>
-
 
 #include <wx/event.h>
 #include <wx/frame.h>
@@ -48,7 +45,7 @@ struct TaskPanel {
     wxPanel* topPanel;
     wxScrolled<wxPanel>* bottomPanel;
     wxButton* addTaskButton;
-    wxStaticText* projectNameText;
+    wxTextCtrl* projectNameTextCtrl;
     TaskProjectComp* currentTaskCompList = nullptr;
 };
 
@@ -66,6 +63,7 @@ public:
     template <class... Args>
     MainFrame(Args... args);
     void setup();
+
     ~MainFrame() override = default;
 
 private:
@@ -94,6 +92,7 @@ private:
     void onAddTaskButtonClicked(wxCommandEvent&);
     void onCalDialogRequest(wxCommandEvent&);
     void onCalDialogDonePressed(wxCommandEvent&);
+    void onProjectNameChanged(wxCommandEvent&);
 };
 
 template <class... Args>
@@ -115,7 +114,6 @@ MainFrame::MainFrame(Args... args)
     Layout();
     SetClientSize(DEFAULT_FRAME_DIMS);
     SetMinClientSize(DEFAULT_FRAME_DIMS);
-    m_mainSplitter->SetBackgroundColour(wxColor(255, 255, 255));
     SetBackgroundColour(wxColor(255, 255, 255));
     Bind(EVT_CHANGE_PROJECT, &MainFrame::onProjectChange, this);
     Bind(EVT_TASK_FINISHED, &MainFrame::onTaskChecked, this);

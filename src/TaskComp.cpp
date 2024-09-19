@@ -1,6 +1,5 @@
 #include "../include/TodoList/TaskComp.hpp"
 
-#include "wx/anybutton.h"
 #include "wx/colour.h"
 #include "wx/dc.h"
 #include "wx/event.h"
@@ -54,7 +53,6 @@ void TaskComp::allocateControls() {
 
 void TaskComp::setControlsLayout() {
     textCtrl->Hide();
-    auto sizerFlags = wxSizerFlags();
     mainSizer->Add(checkBox, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxALIGN_LEFT, 10);
     mainSizer->Add(taskText, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxALIGN_LEFT, 10);
     mainSizer->AddStretchSpacer();
@@ -63,13 +61,19 @@ void TaskComp::setControlsLayout() {
 }
 
 void TaskComp::setBindings() {
-    this->Bind(wxEVT_LEFT_DCLICK, &TaskComp::onPanelDoubleLeftClick, this);
+    Bind(wxEVT_LEFT_DCLICK, &TaskComp::onPanelDoubleLeftClick, this);
+
     duoDateText->Bind(wxEVT_LEFT_DCLICK, &TaskComp::onDuoDateDoubleLeftClick, this);
+
     Bind(wxEVT_PAINT, &TaskComp::onPaint, this);
+
     checkBox->Bind(wxEVT_CHECKBOX, &TaskComp::onCheckBoxClick, this);
+
     textCtrl->Bind(
         wxEVT_KEY_DOWN, [this](wxKeyEvent& ev) { std::invoke(&TaskComp::onKeyPressedTextCtrl, this, std::ref(ev)); },
         textCtrl->GetId());
+
+    textCtrl->Bind(wxEVT_MOUSEWHEEL, [](TaskComp*, wxMouseEvent& ev) { ev.Skip(); }, this);
 }
 
 void TaskComp::setStyle() {

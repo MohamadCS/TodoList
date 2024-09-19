@@ -12,7 +12,9 @@
 
 struct TaskComp;
 
+// Consider making it private
 struct TaskProjectComp : public wxPanel {
+
     std::uint32_t projectId;
     bool isCurrentProject;
     TaskList* taskList;
@@ -22,9 +24,9 @@ struct TaskProjectComp : public wxPanel {
     wxBoxSizer* mainSizer;
     wxStaticText* projectNameText;
 
-    wxColor unselectedColor = wxColor(250, 250, 250);
-    wxColor selectedColor = wxColor(238, 238, 238);
-    wxColor textColor = wxColor(0, 0, 0);
+    const wxColor unselectedColor = wxColor(250, 250, 250);
+    const wxColor selectedColor = wxColor(238, 238, 238);
+    const wxColor textColor = wxColor(0, 0, 0);
 
     inline static const wxSizerFlags SIZER_FLAGS = wxSizerFlags().Proportion(0).Expand().Border(wxALL, 10);
 
@@ -41,8 +43,10 @@ struct TaskProjectComp : public wxPanel {
 
     void allocateControls();
     void onPaint(wxPaintEvent&);
+
     void paintNow();
     void setControlsLayout();
     void setBindings();
     void setStyle();
+    void setProjectName(const wxString&);
 };

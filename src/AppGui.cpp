@@ -2,6 +2,7 @@
 #include "../include/TodoList/MainFrame.hpp"
 #include "wx/gdicmn.h"
 #include "wx/string.h"
+#include <wx/sysopt.h>
 
 bool AppGui::OnInit() {
     m_views.mainFrame = new MainFrame(nullptr, wxID_ANY, APP_NAME, wxDefaultPosition, wxDefaultSize);

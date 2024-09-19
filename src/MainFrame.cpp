@@ -13,6 +13,7 @@
 #include "wx/gdicmn.h"
 #include "wx/log.h"
 #include "wx/sizer.h"
+#include "wx/textctrl.h"
 #include <wx/button.h>
 #include <wx/panel.h>
 #include <wx/scrolwin.h>
@@ -21,7 +22,6 @@
 static TimePoint wxDateTimeToChrono(const wxDateTime& wxDate);
 
 void MainFrame::refreshSidebar() {
-    wxLogDebug("Refreshing Sidebar");
     m_sidebar.homePanel->Layout();
     m_sidebar.homePanel->Refresh();
     m_sidebar.projectsPanel->Layout();
@@ -31,7 +31,7 @@ void MainFrame::refreshSidebar() {
 }
 
 void MainFrame::refreshTaskPanel() {
-    wxLogDebug("Refreshing Task Panel");
+    wxLogDebug("Adding Cal Dialog");
     m_taskPanel.taskPanel->Layout();
     m_taskPanel.taskPanel->Refresh();
 }
@@ -53,27 +53,44 @@ void MainFrame::addTaskPanel() {
     m_taskPanel.bottomPanel->SetMinSize(wxSize(200, 200));
 
     m_taskPanel.taskPanelBoxSizer->Add(m_taskPanel.topPanel, wxSizerFlags(1).Expand().FixedMinSize());
-    m_taskPanel.taskPanelBoxSizer->Add(m_taskPanel.bottomPanel, wxSizerFlags(9).Expand());
+    m_taskPanel.taskPanelBoxSizer->Add(m_taskPanel.bottomPanel, wxSizerFlags(7).Expand());
 
     m_taskPanel.taskPanel->SetSizerAndFit(m_taskPanel.taskPanelBoxSizer);
     m_taskPanel.topPanel->SetSizerAndFit(m_taskPanel.topBoxSizer);
     m_taskPanel.bottomPanel->SetSizerAndFit(m_taskPanel.bottomBoxSizer);
 
     m_taskPanel.addTaskButton = new wxButton(m_taskPanel.topPanel, wxID_ANY, "Add Task");
-    m_taskPanel.projectNameText = new wxStaticText(m_taskPanel.topPanel, wxID_ANY, "");
+    // m_taskPanel.projectNameText = new wxStaticText(m_taskPanel.topPanel, wxID_ANY, "");
+    auto textStyle = wxBORDER_NONE | wxTE_WORDWRAP | wxTE_MULTILINE | wxTE_PROCESS_ENTER;
+    m_taskPanel.projectNameTextCtrl =
+        new wxTextCtrl(m_taskPanel.topPanel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, textStyle);
 
     m_taskPanel.addTaskButton->Bind(wxEVT_BUTTON, &MainFrame::onAddTaskButtonClicked, this);
 
-    wxFont font(20, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
-    m_taskPanel.projectNameText->SetFont(std::move(font));
+    wxFont font(24, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
+    m_taskPanel.projectNameTextCtrl->SetFont(font);
 
     m_taskPanel.topBoxSizer->AddSpacer(10);
-    m_taskPanel.topBoxSizer->Add(m_taskPanel.projectNameText, wxSizerFlags(0).CenterVertical());
-    m_taskPanel.topBoxSizer->AddStretchSpacer(3);
+    m_taskPanel.topBoxSizer->Add(m_taskPanel.projectNameTextCtrl, 1, wxALIGN_CENTER_VERTICAL | wxALL, 10);
     m_taskPanel.topBoxSizer->Add(m_taskPanel.addTaskButton, wxSizerFlags(0).CenterVertical());
     m_taskPanel.topBoxSizer->AddSpacer(10);
 
     m_taskPanel.taskPanel->SetBackgroundColour(wxColor(255, 255, 255));
+    m_taskPanel.projectNameTextCtrl->Bind(wxEVT_TEXT, &MainFrame::onProjectNameChanged, this);
+
+    m_taskPanel.projectNameTextCtrl->Bind(wxEVT_TEXT_ENTER, [this](wxCommandEvent&) {
+        m_taskPanel.currentTaskCompList->setProjectName(m_taskPanel.projectNameTextCtrl->GetValue());
+        m_taskPanel.currentTaskCompList->SetFocus();
+    });
+
+    m_taskPanel.projectNameTextCtrl->Bind(wxEVT_TEXT, &MainFrame::onProjectNameChanged, this);
+
+    // m_taskPanel.projectNameTextCtrl->Bind(wxEVT_KILL_FOCUS, [this](wxFocusEvent&){
+    //     m_taskPanel.currentTaskCompList->setProjectName(m_taskPanel.currentTaskCompList->projectName);
+    //     m_taskPanel.projectNameTextCtrl->SetValue(m_taskPanel.currentTaskCompList->projectName);
+    //     m_taskPanel.currentTaskCompList->SetFocus();
+    // });
+
     refreshTaskPanel();
     wxLogDebug("Finished Task Panel");
 }
@@ -123,7 +140,7 @@ void MainFrame::addSidebar() {
 
     m_sidebar.homeBoxSizer->AddSpacer(10);
     m_sidebar.homeBoxSizer->Add(m_sidebar.addProjectButton, wxSizerFlags().CenterHorizontal());
-    m_sidebar.homeBoxSizer->AddStretchSpacer();
+    m_sidebar.homeBoxSizer->AddSpacer(20);
     m_sidebar.homeBoxSizer->Add(m_sidebar.myProjectsText, wxSizerFlags().Border(wxLEFT, 10));
     m_sidebar.homeBoxSizer->AddSpacer(10);
 
@@ -138,8 +155,6 @@ void MainFrame::addCalDialog() {
     m_calDialog.calender = new wxCalendarCtrl(m_calDialog.dialog, wxID_ANY);
     m_calDialog.doneButton = new wxButton(m_calDialog.dialog, wxID_ANY, "Done");
     m_calDialog.cancelButton = new wxButton(m_calDialog.dialog, wxID_ANY, "Cancel");
-
-    m_calDialog.dialog->SetSize(wxSize(m_calDialog.calender->GetSize().x, 300));
 
     auto* buttonSizer = new wxBoxSizer(wxHORIZONTAL);
 
@@ -186,7 +201,8 @@ void MainFrame::setProject(TaskProjectComp* newProject) {
     }
     m_taskPanel.currentTaskCompList = newProject;
     m_taskPanel.currentTaskCompList->select(m_taskPanel.bottomBoxSizer);
-    m_taskPanel.projectNameText->SetLabel(m_taskPanel.currentTaskCompList->projectName);
+    m_taskPanel.projectNameTextCtrl->SetValue(m_taskPanel.currentTaskCompList->projectName);
+    m_taskPanel.projectNameTextCtrl->SetValue(m_taskPanel.currentTaskCompList->projectName);
 
     m_taskPanel.bottomPanel->Scroll(0, 0);
 
@@ -247,13 +263,15 @@ void MainFrame::onCalDialogRequest(wxCommandEvent& ev) {
 void MainFrame::onCalDialogDonePressed(wxCommandEvent& ev) {
     wxLogDebug("Date change done button pressed");
     if (m_calDialog.currentTaskPair == nullptr) {
-        wxLogDebug("nullptr from %s", __FUNCTION__);
+        wxLogDebug("nullptr");
     }
+
     auto [taskCompPtr, dateChanging] = *m_calDialog.currentTaskPair;
     auto calDate = m_calDialog.calender->GetDate();
     auto calDateChrono = wxDateTimeToChrono(calDate);
     wxStaticText* staticTextPtr = nullptr;
     TimePoint* timePointPtr = nullptr;
+
     switch (dateChanging) {
     case TaskComp::ChangingDate::DUO_DATE:
         staticTextPtr = taskCompPtr->duoDateText;
@@ -284,6 +302,20 @@ void MainFrame::onCalDialogDonePressed(wxCommandEvent& ev) {
 
     m_calDialog.dialog->EndModal(0);
     ev.Skip();
+}
+
+void MainFrame::onProjectNameChanged(wxCommandEvent&) {
+
+    const int maxSize = 25;
+    auto name = m_taskPanel.projectNameTextCtrl->GetValue();
+    if (m_taskPanel.projectNameTextCtrl->GetValue().size() > maxSize) {
+        name = name.SubString(0, maxSize - 1);           // Trim to 30 characters
+        m_taskPanel.projectNameTextCtrl->SetValue(name); // Update the text control
+        m_taskPanel.projectNameTextCtrl->SetInsertionPoint(maxSize);
+    }
+    m_taskPanel.currentTaskCompList->projectNameText->SetLabel(name);
+    m_taskPanel.currentTaskCompList->Refresh();
+    m_taskPanel.currentTaskCompList->Layout();
 }
 
 static TimePoint wxDateTimeToChrono(const wxDateTime& wxDate) {

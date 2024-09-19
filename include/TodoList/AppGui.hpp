@@ -19,6 +19,7 @@ public:
 private:
     Views m_views;
     wxFrame* m_currentFrame;
+
     const wxString APP_NAME = "TodoList";
 };
 

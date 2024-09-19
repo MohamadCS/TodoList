@@ -23,8 +23,9 @@ struct Task {
     std::vector<TaskList*> taskLists;
 };
 
-struct TaskList {
+struct TaskList { // remo
     std::vector<Task*> tasks;
+    std::string name;
 };
 
 class AppCore {
