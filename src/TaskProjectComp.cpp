@@ -1,4 +1,5 @@
 #include "../include/TodoList/TaskProjectComp.hpp"
+#include "../include/TodoList/Utils.hpp"
 #include <optional>
 #include <wx/checkbox.h>
 #include <wx/event.h>
@@ -66,12 +67,11 @@ void TaskProjectComp::onPanelLeftClick(wxMouseEvent& ev) {
     wxCommandEvent projectChangeEvent{EVT_CHANGE_PROJECT};
     projectChangeEvent.SetClientData(this);
     wxPostEvent(this, std::move(projectChangeEvent));
-    GetParent()->Refresh();
-    GetParent()->Layout();
+    Utility::refresh(GetParent());
     ev.Skip();
 }
 
-void TaskProjectComp::select(wxBoxSizer* sizer) {
+void TaskProjectComp::showProject(wxBoxSizer* sizer) {
 
     auto add_comp = [&sizer, this](auto&& control) mutable {
         if (control != nullptr) {
@@ -89,11 +89,10 @@ void TaskProjectComp::select(wxBoxSizer* sizer) {
     m_isCurrentProject = true;
     auto& appCore = Core::App::instance();
     appCore.setCurrentProjectId(getProjectId());
-    Refresh();
-    Layout();
+    Utility::refresh(this);
 }
 
-void TaskProjectComp::unselect(wxBoxSizer* sizer) {
+void TaskProjectComp::hideProject(wxBoxSizer* sizer) {
 
     auto detach_comp = [&sizer](auto&& control) mutable {
         if (control != nullptr) {
@@ -108,7 +107,6 @@ void TaskProjectComp::unselect(wxBoxSizer* sizer) {
     }
 
     m_isCurrentProject = false;
-
     Layout();
 }
 
@@ -127,9 +125,7 @@ TaskComp* TaskProjectComp::addTask(wxPanel* control, std::optional<Core::Task*> 
 
     m_taskListComp.push_back(taskComp);
 
-    control->Refresh();
-    control->Layout();
-
+    Utility::refresh(this);
     return taskComp;
 }
 
@@ -150,8 +146,7 @@ void TaskProjectComp::setProjectName(const wxString& newName, bool guiOnly) {
 
     m_projectNameText->SetLabel(newName);
 
-    Refresh();
-    Layout();
+    Utility::refresh(this);
 }
 
 wxString TaskProjectComp::getProjectName(bool gui) const {
@@ -165,4 +160,4 @@ std::uint32_t TaskProjectComp::getProjectId() const {
     return m_taskList->taskListId;
 }
 
-} // namespace TodoList::AppGui
+} // namespace TodoList::Gui

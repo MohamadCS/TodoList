@@ -19,7 +19,7 @@
 #include <wx/frame.h>
 #include <wx/sizer.h>
 
-namespace TodoList::Gui{
+namespace TodoList::Gui {
 
 struct Sidebar {
     wxBoxSizer* sidebarBoxSizer;
@@ -112,15 +112,16 @@ MainFrame::MainFrame(Args... args)
     addCalDialog();
 
     m_mainSplitter->SplitVertically(m_sidebar.sideBarPanel, m_taskPanel.taskPanel);
+    Bind(EVT_CHANGE_PROJECT, &MainFrame::onProjectChange, this);
+    Bind(EVT_TASK_FINISHED, &MainFrame::onTaskChecked, this);
+    Bind(EVT_REQUEST_CAL_DIALOG, &MainFrame::onCalDialogRequest, this);
+
 
     Layout();
     SetClientSize(DEFAULT_FRAME_DIMS);
     SetMinClientSize(DEFAULT_FRAME_DIMS);
     SetBackgroundColour(wxColor(255, 255, 255));
-    Bind(EVT_CHANGE_PROJECT, &MainFrame::onProjectChange, this);
-    Bind(EVT_TASK_FINISHED, &MainFrame::onTaskChecked, this);
-    Bind(EVT_REQUEST_CAL_DIALOG, &MainFrame::onCalDialogRequest, this);
     setProject(m_sidebar.inboxProject);
 }
 
-}
+} // namespace TodoList::Gui

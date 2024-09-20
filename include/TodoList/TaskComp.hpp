@@ -17,10 +17,10 @@
 namespace TodoList::Gui {
 
 struct TaskProjectComp;
-struct TaskComp : public wxPanel {
-public:
-    Core::Task* task;
 
+struct TaskComp : public wxPanel {
+
+    Core::Task* task;
     wxStaticText* taskText;
     wxStaticText* duoDateText;
     wxStaticText* deadLineText;
@@ -28,12 +28,18 @@ public:
     wxCheckBox* checkBox;
     wxBoxSizer* mainSizer;
     std::map<uint32_t, TaskProjectComp*> taskProjects;
+    inline static const wxSize DEFAULT_SIZE = wxSize(200, 40);
+
+    enum class ChangingDate { DUO_DATE, DEADLINE_DATE };
 
     void setStyle();
     void setBindings();
     void allocateControls();
     void setControlsLayout();
     void cancelTextInsertion();
+
+    TaskComp(wxWindow* parent, wxWindowID id, Core::Task* taskPtr, std::pair<uint32_t, TaskProjectComp*> taskProject,
+             const wxPoint& postion = wxDefaultPosition, const wxSize& size = DEFAULT_SIZE);
 
     // Event Handling
     void onPaint(wxPaintEvent& event);
@@ -42,11 +48,5 @@ public:
     void onCheckBoxClick(wxCommandEvent&);
     void onDuoDateDoubleLeftClick(wxMouseEvent&);
 
-    TaskComp(wxWindow* parent, wxWindowID id, Core::Task* taskPtr, std::pair<uint32_t, TaskProjectComp*> taskProject,
-             const wxPoint& postion = wxDefaultPosition, const wxSize& size = DEFAULT_SIZE);
-
-    inline static const wxSize DEFAULT_SIZE = wxSize(200, 40);
-
-    enum class ChangingDate { DUO_DATE, DEADLINE_DATE };
 };
-} // namespace TodoList::AppGui
+} // namespace TodoList::Gui

@@ -7,11 +7,11 @@
 #include <string>
 #include <vector>
 
+namespace TodoList::Core {
+
 struct Task;
 struct TaskList;
 class AppCore;
-
-namespace TodoList::Core {
 
 using TimePoint = std::chrono::time_point<std::chrono::system_clock>;
 
@@ -61,4 +61,4 @@ private:
     App() = default;
 };
 
-} // namespace TodoList::AppCore
+} // namespace TodoList::Core

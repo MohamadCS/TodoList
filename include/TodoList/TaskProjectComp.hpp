@@ -20,14 +20,32 @@ public:
                     std::optional<Core::TaskList*> taskList = std::nullopt,
                     const wxPoint& postion = wxDefaultPosition, const wxSize& size = DEFAULT_SIZE);
 
+
+    /**
+     * @brief Set project name
+     *
+     * @param guiOnly true if we want to set Gui elements text without Core::TaskList.
+     */
     void setProjectName(const wxString&, bool guiOnly = false);
+
+    /**
+     * @brief Get project name Id
+     *
+     * @param gui false to get the Core::TaskList name, true gets the wxStaticText name.
+     * @return 
+     */
     wxString getProjectName(bool gui = false) const;
+
+    /**
+     * @brief Returns Core::TaskList id.
+     */
     std::uint32_t getProjectId() const;
 
-    void select(wxBoxSizer*);
-    void unselect(wxBoxSizer*);
-
     TaskComp* addTask(wxPanel*, std::optional<Core::Task*> task = std::nullopt);
+
+    void showProject(wxBoxSizer*);
+
+    void hideProject(wxBoxSizer*);
 
 private:
     bool m_isCurrentProject;

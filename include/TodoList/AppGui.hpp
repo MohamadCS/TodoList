@@ -24,7 +24,6 @@ private:
     const wxString APP_NAME = "TodoList";
 };
 
-
 }; // namespace TodoList::Gui
-//
+
 wxIMPLEMENT_APP(TodoList::Gui::AppGui);

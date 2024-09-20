@@ -1,11 +1,12 @@
 #include "../include/TodoList/MainFrame.hpp"
 #include "../include/TodoList/AppCore.hpp"
 #include "../include/TodoList/TaskComp.hpp"
+#include "../include/TodoList/Utils.hpp"
 
 #include <chrono>
 #include <ctime>
 #include <format>
-#include <string>
+#include <tuple>
 #include <utility>
 
 #include "wx/calctrl.h"
@@ -19,22 +20,16 @@
 #include <wx/scrolwin.h>
 #include <wx/statline.h>
 
+static TodoList::Core::TimePoint wxDateTimeToChrono(const wxDateTime& wxDate);
+
 namespace TodoList::Gui {
-static Core::TimePoint wxDateTimeToChrono(const wxDateTime& wxDate);
 
 void MainFrame::refreshSidebar() {
-    m_sidebar.homePanel->Layout();
-    m_sidebar.homePanel->Refresh();
-    m_sidebar.projectsPanel->Layout();
-    m_sidebar.projectsPanel->Refresh();
-    m_sidebar.sideBarPanel->Layout();
-    m_sidebar.sideBarPanel->Refresh();
+    Utility::refresh(std::make_tuple(m_sidebar.homePanel, m_sidebar.projectsPanel, m_sidebar.sideBarPanel));
 }
 
 void MainFrame::refreshTaskPanel() {
-    wxLogDebug("Adding Cal Dialog");
-    m_taskPanel.taskPanel->Layout();
-    m_taskPanel.taskPanel->Refresh();
+    Utility::refresh(std::make_tuple(m_taskPanel.taskPanel));
 }
 
 void MainFrame::addTaskPanel() {
@@ -47,7 +42,7 @@ void MainFrame::addTaskPanel() {
     m_taskPanel.topPanel = new wxPanel(m_taskPanel.taskPanel);
     m_taskPanel.bottomPanel = new wxScrolled<wxPanel>(m_taskPanel.taskPanel);
 
-    m_taskPanel.bottomPanel->SetScrollRate(10, 10); // change to 0 horizontal scroll
+    m_taskPanel.bottomPanel->SetScrollRate(5, 5); // change to 0 horizontal scroll
 
     m_taskPanel.taskPanel->SetName("Task Panel");
 
@@ -100,7 +95,7 @@ void MainFrame::addSidebar() {
     m_sidebar.homePanel = new wxPanel(m_sidebar.sideBarPanel, wxID_ANY, wxDefaultPosition);
     m_sidebar.projectsPanel = new wxScrolled<wxPanel>(m_sidebar.sideBarPanel, wxID_ANY, wxDefaultPosition);
 
-    m_sidebar.projectsPanel->SetScrollRate(10, 10); // change to 0 horizontal scroll
+    m_sidebar.projectsPanel->SetScrollRate(5, 5); // change to 0 horizontal scroll
 
     m_sidebar.projectsPanel->SetName("Projects Panel");
     m_sidebar.homePanel->SetName("Home Panel");
@@ -191,10 +186,10 @@ void MainFrame::setProject(TaskProjectComp* newProject) {
     }
 
     if (m_taskPanel.currentTaskCompList != nullptr) {
-        m_taskPanel.currentTaskCompList->unselect(m_taskPanel.bottomBoxSizer);
+        m_taskPanel.currentTaskCompList->hideProject(m_taskPanel.bottomBoxSizer);
     }
     m_taskPanel.currentTaskCompList = newProject;
-    m_taskPanel.currentTaskCompList->select(m_taskPanel.bottomBoxSizer);
+    m_taskPanel.currentTaskCompList->showProject(m_taskPanel.bottomBoxSizer);
     m_taskPanel.projectNameTextCtrl->SetValue(m_taskPanel.currentTaskCompList->getProjectName());
 
     m_taskPanel.bottomPanel->Scroll(0, 0);
@@ -217,14 +212,18 @@ void MainFrame::onAddTaskButtonClicked(wxCommandEvent& ev) {
 }
 
 void MainFrame::onAddProjectButtonClicked(wxCommandEvent& ev) {
-    auto& appCore = Core::App::instance();
     auto* newProject = new TaskProjectComp(m_sidebar.projectsPanel, wxID_ANY, "Empty Project");
+
     wxLogDebug("Added Project with ID: %d", newProject->getProjectId());
+
     m_sidebar.projectsList.push_back(newProject);
     m_sidebar.projectsBoxSizer->Add(newProject, wxSizerFlags(0).FixedMinSize().Border(wxALL, 5).Expand());
+
     setProject(newProject);
+
     m_taskPanel.projectNameTextCtrl->SetFocus();
     m_taskPanel.projectNameTextCtrl->SetInsertionPointEnd();
+
     refreshSidebar();
 }
 
@@ -239,7 +238,6 @@ void MainFrame::onTaskChecked(wxCommandEvent& ev) {
     m_taskPanel.bottomBoxSizer->Detach(taskCompPtr);
     taskCompPtr->Hide();
     refreshTaskPanel();
-    refreshSidebar();
 }
 
 void MainFrame::onCalDialogRequest(wxCommandEvent& ev) {
@@ -263,6 +261,7 @@ void MainFrame::onCalDialogDonePressed(wxCommandEvent& ev) {
     auto [taskCompPtr, dateChanging] = *m_calDialog.currentTaskPair;
     auto calDate = m_calDialog.calender->GetDate();
     auto calDateChrono = wxDateTimeToChrono(calDate);
+
     wxStaticText* staticTextPtr = nullptr;
     Core::TimePoint* timePointPtr = nullptr;
 
@@ -287,12 +286,7 @@ void MainFrame::onCalDialogDonePressed(wxCommandEvent& ev) {
 
     *timePointPtr = calDateChrono;
     staticTextPtr->SetLabel(std::format("{:%d %B}", *timePointPtr));
-
-    staticTextPtr->Refresh();
-    staticTextPtr->Layout();
-
-    taskCompPtr->Layout();
-    taskCompPtr->Refresh();
+    TodoList::Utility::refresh(std::make_tuple(staticTextPtr, taskCompPtr));
 
     m_calDialog.dialog->EndModal(0);
     ev.Skip();
@@ -300,19 +294,23 @@ void MainFrame::onCalDialogDonePressed(wxCommandEvent& ev) {
 
 void MainFrame::onProjectNameChanged(wxCommandEvent&) {
 
-    const int maxSize = 25;
+    wxLogDebug("Changing Project's Name");
+
+    constexpr int maxSize = 25;
     auto name = m_taskPanel.projectNameTextCtrl->GetValue();
     if (m_taskPanel.projectNameTextCtrl->GetValue().size() > maxSize) {
         name = name.SubString(0, maxSize - 1);           // Trim to 30 characters
         m_taskPanel.projectNameTextCtrl->SetValue(name); // Update the text control
-        m_taskPanel.projectNameTextCtrl->SetInsertionPoint(maxSize);
+        m_taskPanel.projectNameTextCtrl->SetInsertionPointEnd();
     }
+
     m_taskPanel.currentTaskCompList->setProjectName(name, true);
-    m_taskPanel.currentTaskCompList->Refresh();
-    m_taskPanel.currentTaskCompList->Layout();
+    Utility::refresh(m_taskPanel.currentTaskCompList);
 }
 
-static Core::TimePoint wxDateTimeToChrono(const wxDateTime& wxDate) {
+} // namespace TodoList::Gui
+
+static TodoList::Core::TimePoint wxDateTimeToChrono(const wxDateTime& wxDate) {
     wxLogDebug("Converting time to chrono");
     std::tm tm{};
 
@@ -323,4 +321,3 @@ static Core::TimePoint wxDateTimeToChrono(const wxDateTime& wxDate) {
     std::time_t time_t_date = std::mktime(&tm);
     return std::chrono::system_clock::from_time_t(time_t_date);
 }
-} // namespace TodoList::Gui

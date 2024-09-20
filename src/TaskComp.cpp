@@ -1,25 +1,26 @@
 #include "../include/TodoList/TaskComp.hpp"
-
-#include "wx/colour.h"
-#include "wx/dc.h"
-#include "wx/event.h"
-#include "wx/gdicmn.h"
-#include "wx/sizer.h"
-#include "wx/textctrl.h"
-#include <cstdint>
-#include <sys/types.h>
-#include <unistd.h>
-#include <wx/button.h>
-#include <wx/log.h>
+#include "../include/TodoList/Utils.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <map>
+#include <sys/types.h>
+#include <unistd.h>
+
+#include <wx/button.h>
+#include <wx/colour.h>
+#include <wx/dc.h>
+#include <wx/event.h>
+#include <wx/gdicmn.h>
+#include <wx/log.h>
+#include <wx/sizer.h>
+#include <wx/textctrl.h>
+
+static void showSizer(wxBoxSizer* sizer, bool state = true);
+static void onReturnPressed(TodoList::Gui::TaskComp* taskComp);
+static void onEscapePressed(TodoList::Gui::TaskComp* taskComp);
 
 namespace TodoList::Gui {
-static void showSizer(wxBoxSizer* sizer, bool state = true);
-static void onReturnPressed(TaskComp* taskComp);
-static void onEscapePressed(TaskComp* taskComp);
-static void onEscapePressed(TaskComp* taskComp);
 
 TaskComp::TaskComp(wxWindow* parent, wxWindowID id, Core::Task* taskPtr,
                    std::pair<uint32_t, TaskProjectComp*> taskProject, const wxPoint& postion, const wxSize& size)
@@ -34,8 +35,8 @@ TaskComp::TaskComp(wxWindow* parent, wxWindowID id, Core::Task* taskPtr,
     setBindings();
     setStyle();
     SetSizer(mainSizer);
-    Refresh();
-    Layout();
+
+    Utility::refresh(this);
 }
 
 void TaskComp::allocateControls() {
@@ -106,33 +107,10 @@ void TaskComp::onKeyPressedTextCtrl(wxKeyEvent& keyEv) {
     keyEv.Skip();
 }
 
-static void showSizer(wxBoxSizer* sizer, bool state) {
-
-    if (sizer == nullptr) {
-        wxLogDebug("Got Null");
-        exit(0);
-    }
-
-    auto& children = sizer->GetChildren();
-    std::for_each(children.begin(), children.end(), [state](auto& child) { child->Show(state); });
-}
-
 void TaskComp::cancelTextInsertion() {
     showSizer(mainSizer, true);
     textCtrl->Hide();
     taskText->SetLabel(textCtrl->GetValue());
-}
-
-static void onReturnPressed(TaskComp* taskComp) {
-
-    if (taskComp == nullptr) {
-        wxLogDebug("Got Null");
-        exit(0);
-    }
-
-    showSizer(taskComp->mainSizer, true);
-    taskComp->textCtrl->Hide();
-    taskComp->taskText->SetLabel(taskComp->textCtrl->GetValue());
 }
 
 void TaskComp::onPaint(wxPaintEvent& ev) {
@@ -152,8 +130,7 @@ void TaskComp::onCheckBoxClick(wxCommandEvent& ev) {
     wxCommandEvent projectChangeEvent{EVT_TASK_FINISHED};
     projectChangeEvent.SetClientData(this);
     wxPostEvent(this, std::move(projectChangeEvent));
-    this->GetParent()->Layout();
-    this->GetParent()->Refresh();
+    Utility::refresh(this->GetParent());
 }
 
 void TaskComp::onDuoDateDoubleLeftClick(wxMouseEvent& ev) {
@@ -161,7 +138,31 @@ void TaskComp::onDuoDateDoubleLeftClick(wxMouseEvent& ev) {
     wxCommandEvent projectChangeEvent{EVT_REQUEST_CAL_DIALOG};
     projectChangeEvent.SetClientData(new std::pair<TaskComp*, ChangingDate>{this, ChangingDate::DUO_DATE});
     wxPostEvent(this, std::move(projectChangeEvent));
-    this->GetParent()->Layout();
-    this->GetParent()->Refresh();
+    Utility::refresh(this->GetParent());
 }
+
 } // namespace TodoList::Gui
+
+static void showSizer(wxBoxSizer* sizer, bool state) {
+
+    if (sizer == nullptr) {
+        wxLogDebug("Got Null");
+        exit(0);
+    }
+
+    auto& children = sizer->GetChildren();
+    std::for_each(children.begin(), children.end(), [state](auto& child) { child->Show(state); });
+}
+
+static void onReturnPressed(TodoList::Gui::TaskComp* taskComp) {
+
+    if (taskComp == nullptr) {
+        wxLogDebug("Got Null");
+        exit(0);
+    }
+
+    showSizer(taskComp->mainSizer, true);
+    taskComp->textCtrl->Hide();
+    taskComp->taskText->SetLabel(taskComp->textCtrl->GetValue());
+    TodoList::Utility::refresh(taskComp);
+}
