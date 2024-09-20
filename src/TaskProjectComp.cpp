@@ -12,45 +12,55 @@
 #include <utility>
 
 TaskProjectComp::TaskProjectComp(wxWindow* parent, wxWindowID id, std::uint32_t projectId,
-                                 const std::string& projectName, std::optional<TaskList*> taskList,
+                                 const std::optional<std::string>& projectName, std::optional<TaskList*> taskList,
                                  const wxPoint& postion, const wxSize& size)
     : wxPanel(parent, id, postion, DEFAULT_SIZE),
-      projectId(projectId),
-      isCurrentProject(false),
-      projectName(projectName) {
+      m_projectId(projectId),
+      m_isCurrentProject(false) {
 
     SetName("Project Panel");
 
-    SetMinSize(DEFAULT_SIZE);
-
     auto& appCore = AppCore::instance();
+    m_taskList = taskList.value_or(appCore.newTaskList());
+    m_taskList->name = projectName.value_or(m_taskList->name);
 
-    auto* foldTaskList = taskList.value_or(appCore.newTaskList());
+    allocateControls();
+    setControlsLayout();
+    setBindings();
+    setStyle();
 
-    this->taskList = foldTaskList;
-    this->taskList->name = projectName;
-
-    projectNameText =
-        new wxStaticText(this, wxID_ANY, projectName, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL);
-
-    mainSizer = new wxBoxSizer(wxVERTICAL);
-
-    mainSizer->AddStretchSpacer(1);
-    mainSizer->Add(projectNameText, wxSizerFlags(1).Expand().FixedMinSize());
-    mainSizer->AddStretchSpacer(1);
-
-    Bind(wxEVT_LEFT_DOWN, &TaskProjectComp::onPanelLeftClick, this);
-    Bind(wxEVT_PAINT, &TaskProjectComp::onPaint, this);
-    SetSizerAndFit(mainSizer);
-    SetWindowStyle(GetWindowStyle() | wxNO_BORDER);
-    SetBackgroundColour(unselectedColor);
+    SetSizerAndFit(m_mainSizer);
 }
 
+void TaskProjectComp::allocateControls() {
+    m_projectNameText =
+        new wxStaticText(this, wxID_ANY, getProjectName(), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL);
+
+    m_mainSizer = new wxBoxSizer(wxVERTICAL);
+}
+
+void TaskProjectComp::setBindings() {
+    Bind(wxEVT_LEFT_DOWN, &TaskProjectComp::onPanelLeftClick, this);
+    Bind(wxEVT_PAINT, &TaskProjectComp::onPaint, this);
+}
+
+void TaskProjectComp::setControlsLayout() {
+    SetMinSize(DEFAULT_SIZE);
+
+    m_mainSizer->AddStretchSpacer(1);
+    m_mainSizer->Add(m_projectNameText, wxSizerFlags(1).Expand().FixedMinSize());
+    m_mainSizer->AddStretchSpacer(1);
+}
+
+void TaskProjectComp::setStyle() {
+    SetBackgroundColour(unselectedColor);
+    SetWindowStyle(GetWindowStyle() | wxNO_BORDER);
+}
 
 void TaskProjectComp::onPanelLeftClick(wxMouseEvent& ev) {
     auto& appCore = AppCore::instance();
 
-    if (appCore.getCurrentProjectId() == projectId) {
+    if (appCore.getCurrentProjectId() == m_projectId) {
         return;
     }
 
@@ -71,15 +81,15 @@ void TaskProjectComp::select(wxBoxSizer* sizer) {
         }
     };
 
-    for (auto* taskCompPtr : taskListComp) {
-        if(!taskCompPtr->task->checked){
+    for (auto* taskCompPtr : m_taskListComp) {
+        if (!taskCompPtr->task->checked) {
             add_comp(taskCompPtr);
         }
     }
 
-    isCurrentProject = true;
+    m_isCurrentProject = true;
     auto& appCore = AppCore::instance();
-    appCore.setCurrentProjectId(projectId);
+    appCore.setCurrentProjectId(m_projectId);
     Refresh();
     Layout();
 }
@@ -93,45 +103,65 @@ void TaskProjectComp::unselect(wxBoxSizer* sizer) {
         }
     };
 
-    for (auto* taskCompPtr : taskListComp) {
-            taskCompPtr->cancelTextInsertion();
-            detach_comp(taskCompPtr);
+    for (auto* taskCompPtr : m_taskListComp) {
+        taskCompPtr->cancelTextInsertion();
+        detach_comp(taskCompPtr);
     }
 
-    isCurrentProject = false;
+    m_isCurrentProject = false;
 
     Layout();
 }
 
-TaskComp* TaskProjectComp::addTask(Task* task, wxPanel* control) {
+TaskComp* TaskProjectComp::addTask(wxPanel* control, std::optional<Task*> optTask) {
     wxLogDebug("Creating a new task");
-    auto* taskComp = new TaskComp(control, wxID_ANY, task, {projectId, this});
-    auto& appCore = AppCore::instance();
 
-    if (appCore.getCurrentProjectId() == projectId) {
+    auto& appCore = AppCore::instance();
+    auto task = optTask.value_or(appCore.newTask({}, {}, "", "", false, m_taskList));
+    auto* taskComp = new TaskComp(control, wxID_ANY, task, {m_projectId, this});
+
+    if (appCore.getCurrentProjectId() == m_projectId) {
         control->GetSizer()->Add(taskComp, SIZER_FLAGS);
     } else {
         taskComp->Hide();
     }
-    taskListComp.push_back(taskComp);
+
+    m_taskListComp.push_back(taskComp);
+
     control->Refresh();
     control->Layout();
+
     return taskComp;
 }
 
 void TaskProjectComp::onPaint(wxPaintEvent&) {
     wxPaintDC dc(this);
 
-    auto color = isCurrentProject ? selectedColor : unselectedColor;
+    auto color = m_isCurrentProject ? selectedColor : unselectedColor;
     dc.SetBrush(color);
     dc.SetPen(*wxTRANSPARENT_PEN);
     dc.DrawRoundedRectangle(wxRect(wxDefaultPosition, GetSize()), 10);
 }
 
-void TaskProjectComp::setProjectName(const wxString& newName){
-    projectName = newName;
-    projectNameText->SetLabel(newName);
-    taskList->name = newName;
+void TaskProjectComp::setProjectName(const wxString& newName, bool guiOnly) {
+
+    if (!guiOnly) {
+        m_taskList->name = newName;
+    }
+
+    m_projectNameText->SetLabel(newName);
+
     Refresh();
     Layout();
+}
+
+wxString TaskProjectComp::getProjectName(bool gui) const {
+    if (gui) {
+        return m_projectNameText->GetLabel();
+    }
+    return m_taskList->name;
+}
+
+std::uint32_t TaskProjectComp::getProjectId() const {
+    return m_projectId;
 }

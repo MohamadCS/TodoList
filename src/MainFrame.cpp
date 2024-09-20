@@ -60,7 +60,6 @@ void MainFrame::addTaskPanel() {
     m_taskPanel.bottomPanel->SetSizerAndFit(m_taskPanel.bottomBoxSizer);
 
     m_taskPanel.addTaskButton = new wxButton(m_taskPanel.topPanel, wxID_ANY, "Add Task");
-    // m_taskPanel.projectNameText = new wxStaticText(m_taskPanel.topPanel, wxID_ANY, "");
     auto textStyle = wxBORDER_NONE | wxTE_WORDWRAP | wxTE_PROCESS_ENTER;
     m_taskPanel.projectNameTextCtrl =
         new wxTextCtrl(m_taskPanel.topPanel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, textStyle);
@@ -84,12 +83,6 @@ void MainFrame::addTaskPanel() {
     });
 
     m_taskPanel.projectNameTextCtrl->Bind(wxEVT_TEXT, &MainFrame::onProjectNameChanged, this);
-
-    // m_taskPanel.projectNameTextCtrl->Bind(wxEVT_KILL_FOCUS, [this](wxFocusEvent&){
-    //     m_taskPanel.currentTaskCompList->setProjectName(m_taskPanel.currentTaskCompList->projectName);
-    //     m_taskPanel.projectNameTextCtrl->SetValue(m_taskPanel.currentTaskCompList->projectName);
-    //     m_taskPanel.currentTaskCompList->SetFocus();
-    // });
 
     refreshTaskPanel();
     wxLogDebug("Finished Task Panel");
@@ -201,8 +194,7 @@ void MainFrame::setProject(TaskProjectComp* newProject) {
     }
     m_taskPanel.currentTaskCompList = newProject;
     m_taskPanel.currentTaskCompList->select(m_taskPanel.bottomBoxSizer);
-    m_taskPanel.projectNameTextCtrl->SetValue(m_taskPanel.currentTaskCompList->projectName);
-    m_taskPanel.projectNameTextCtrl->SetValue(m_taskPanel.currentTaskCompList->projectName);
+    m_taskPanel.projectNameTextCtrl->SetValue(m_taskPanel.currentTaskCompList->getProjectName());
 
     m_taskPanel.bottomPanel->Scroll(0, 0);
 
@@ -215,8 +207,7 @@ void MainFrame::setProject(TaskProjectComp* newProject) {
 void MainFrame::onAddTaskButtonClicked(wxCommandEvent& ev) {
     auto& appCore = AppCore::instance();
     auto* currentProject = m_taskPanel.currentTaskCompList;
-    auto* task = appCore.newTask({}, {}, "", "", false, currentProject->taskList);
-    auto* taskCompPtr = currentProject->addTask(task, m_taskPanel.bottomPanel);
+    auto* taskCompPtr = currentProject->addTask(m_taskPanel.bottomPanel);
 
     auto mouseEvent = wxMouseEvent();
     taskCompPtr->onPanelDoubleLeftClick(mouseEvent);
@@ -228,7 +219,7 @@ void MainFrame::onAddProjectButtonClicked(wxCommandEvent& ev) {
     auto& appCore = AppCore::instance();
     auto* newProject =
         new TaskProjectComp(m_sidebar.projectsPanel, wxID_ANY, appCore.generateProjectId(), "Empty Project");
-    wxLogDebug("Added Project with ID: %d", newProject->projectId);
+    wxLogDebug("Added Project with ID: %d", newProject->getProjectId());
     m_sidebar.projectsList.push_back(newProject);
     m_sidebar.projectsBoxSizer->Add(newProject, wxSizerFlags(0).FixedMinSize().Border(wxALL, 5).Expand());
     setProject(newProject);
@@ -316,7 +307,7 @@ void MainFrame::onProjectNameChanged(wxCommandEvent&) {
         m_taskPanel.projectNameTextCtrl->SetValue(name); // Update the text control
         m_taskPanel.projectNameTextCtrl->SetInsertionPoint(maxSize);
     }
-    m_taskPanel.currentTaskCompList->projectNameText->SetLabel(name);
+    m_taskPanel.currentTaskCompList->setProjectName(name, true);
     m_taskPanel.currentTaskCompList->Refresh();
     m_taskPanel.currentTaskCompList->Layout();
 }

@@ -5,6 +5,7 @@
 
 #include <cstdint>
 
+#include <optional>
 #include <vector>
 #include <wx/event.h>
 #include <wx/panel.h>
@@ -12,41 +13,42 @@
 
 struct TaskComp;
 
-// Consider making it private
-struct TaskProjectComp : public wxPanel {
+class TaskProjectComp : public wxPanel {
+public:
+    TaskProjectComp(wxWindow* parent, wxWindowID id, std::uint32_t projectId,
+                    const std::optional<std::string>& = std::nullopt,
+                    std::optional<TaskList*> taskList = std::nullopt, const wxPoint& postion = wxDefaultPosition,
+                    const wxSize& size = DEFAULT_SIZE);
 
-    std::uint32_t projectId;
-    bool isCurrentProject;
-    TaskList* taskList;
-    wxString projectName;
+    void setProjectName(const wxString&, bool guiOnly = false);
+    wxString getProjectName(bool gui = false) const;
+    std::uint32_t getProjectId() const;
 
-    std::vector<TaskComp*> taskListComp;
-    wxBoxSizer* mainSizer;
-    wxStaticText* projectNameText;
+    void select(wxBoxSizer*);
+    void unselect(wxBoxSizer*);
+
+    TaskComp* addTask(wxPanel*, std::optional<Task*> task = std::nullopt);
+
+private:
+    std::uint32_t m_projectId;
+    bool m_isCurrentProject;
+    TaskList* m_taskList;
+    std::vector<TaskComp*> m_taskListComp;
+    wxBoxSizer* m_mainSizer;
+    wxStaticText* m_projectNameText;
 
     const wxColor unselectedColor = wxColor(250, 250, 250);
     const wxColor selectedColor = wxColor(238, 238, 238);
     const wxColor textColor = wxColor(0, 0, 0);
 
     inline static const wxSizerFlags SIZER_FLAGS = wxSizerFlags().Proportion(0).Expand().Border(wxALL, 10);
-
-    TaskProjectComp(wxWindow* parent, wxWindowID id, std::uint32_t projectId, const std::string& projectName,
-                    std::optional<TaskList*> taskList = std::nullopt, const wxPoint& postion = wxDefaultPosition,
-                    const wxSize& size = DEFAULT_SIZE);
-
     inline static const wxSize DEFAULT_SIZE = wxSize(50, 50);
 
     void onPanelLeftClick(wxMouseEvent&);
-    void select(wxBoxSizer*);
-    void unselect(wxBoxSizer*);
-    TaskComp* addTask(Task* newTask, wxPanel*);
-
     void allocateControls();
-    void onPaint(wxPaintEvent&);
-
-    void paintNow();
     void setControlsLayout();
     void setBindings();
     void setStyle();
-    void setProjectName(const wxString&);
+    void onPaint(wxPaintEvent&);
+    void paintNow();
 };
