@@ -15,13 +15,14 @@
 #include <algorithm>
 #include <map>
 
+namespace TodoList::Gui {
 static void showSizer(wxBoxSizer* sizer, bool state = true);
 static void onReturnPressed(TaskComp* taskComp);
 static void onEscapePressed(TaskComp* taskComp);
 static void onEscapePressed(TaskComp* taskComp);
 
-TaskComp::TaskComp(wxWindow* parent, wxWindowID id, Task* taskPtr, std::pair<uint32_t, TaskProjectComp*> taskProject,
-                   const wxPoint& postion, const wxSize& size)
+TaskComp::TaskComp(wxWindow* parent, wxWindowID id, Core::Task* taskPtr,
+                   std::pair<uint32_t, TaskProjectComp*> taskProject, const wxPoint& postion, const wxSize& size)
     : wxPanel(parent, id, postion, size),
       task(taskPtr) {
 
@@ -163,3 +164,4 @@ void TaskComp::onDuoDateDoubleLeftClick(wxMouseEvent& ev) {
     this->GetParent()->Layout();
     this->GetParent()->Refresh();
 }
+} // namespace TodoList::Gui

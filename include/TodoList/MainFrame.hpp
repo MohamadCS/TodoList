@@ -19,6 +19,8 @@
 #include <wx/frame.h>
 #include <wx/sizer.h>
 
+namespace TodoList::Gui{
+
 struct Sidebar {
     wxBoxSizer* sidebarBoxSizer;
     wxBoxSizer* homeBoxSizer;
@@ -119,4 +121,6 @@ MainFrame::MainFrame(Args... args)
     Bind(EVT_TASK_FINISHED, &MainFrame::onTaskChecked, this);
     Bind(EVT_REQUEST_CAL_DIALOG, &MainFrame::onCalDialogRequest, this);
     setProject(m_sidebar.inboxProject);
+}
+
 }

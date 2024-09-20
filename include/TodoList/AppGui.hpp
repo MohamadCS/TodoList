@@ -5,6 +5,7 @@
 
 #include "MainFrame.hpp"
 
+namespace TodoList::Gui {
 struct Views {
     MainFrame* mainFrame;
 };
@@ -23,4 +24,7 @@ private:
     const wxString APP_NAME = "TodoList";
 };
 
-wxIMPLEMENT_APP(AppGui);
+
+}; // namespace TodoList::Gui
+//
+wxIMPLEMENT_APP(TodoList::Gui::AppGui);

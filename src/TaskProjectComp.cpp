@@ -1,5 +1,4 @@
 #include "../include/TodoList/TaskProjectComp.hpp"
-#include "wx/colour.h"
 #include <optional>
 #include <wx/checkbox.h>
 #include <wx/event.h>
@@ -11,16 +10,16 @@
 #include <cstdint>
 #include <utility>
 
-TaskProjectComp::TaskProjectComp(wxWindow* parent, wxWindowID id, std::uint32_t projectId,
-                                 const std::optional<std::string>& projectName, std::optional<TaskList*> taskList,
-                                 const wxPoint& postion, const wxSize& size)
+namespace TodoList::Gui {
+
+TaskProjectComp::TaskProjectComp(wxWindow* parent, wxWindowID id, const std::optional<std::string>& projectName,
+                                 std::optional<Core::TaskList*> taskList, const wxPoint& postion, const wxSize& size)
     : wxPanel(parent, id, postion, DEFAULT_SIZE),
-      m_projectId(projectId),
       m_isCurrentProject(false) {
 
     SetName("Project Panel");
 
-    auto& appCore = AppCore::instance();
+    auto& appCore = Core::App::instance();
     m_taskList = taskList.value_or(appCore.newTaskList());
     m_taskList->name = projectName.value_or(m_taskList->name);
 
@@ -58,9 +57,9 @@ void TaskProjectComp::setStyle() {
 }
 
 void TaskProjectComp::onPanelLeftClick(wxMouseEvent& ev) {
-    auto& appCore = AppCore::instance();
+    auto& appCore = Core::App::instance();
 
-    if (appCore.getCurrentProjectId() == m_projectId) {
+    if (appCore.getCurrentProjectId() == getProjectId()) {
         return;
     }
 
@@ -88,8 +87,8 @@ void TaskProjectComp::select(wxBoxSizer* sizer) {
     }
 
     m_isCurrentProject = true;
-    auto& appCore = AppCore::instance();
-    appCore.setCurrentProjectId(m_projectId);
+    auto& appCore = Core::App::instance();
+    appCore.setCurrentProjectId(getProjectId());
     Refresh();
     Layout();
 }
@@ -113,14 +112,14 @@ void TaskProjectComp::unselect(wxBoxSizer* sizer) {
     Layout();
 }
 
-TaskComp* TaskProjectComp::addTask(wxPanel* control, std::optional<Task*> optTask) {
+TaskComp* TaskProjectComp::addTask(wxPanel* control, std::optional<Core::Task*> optTask) {
     wxLogDebug("Creating a new task");
 
-    auto& appCore = AppCore::instance();
+    auto& appCore = Core::App::instance();
     auto task = optTask.value_or(appCore.newTask({}, {}, "", "", false, m_taskList));
-    auto* taskComp = new TaskComp(control, wxID_ANY, task, {m_projectId, this});
+    auto* taskComp = new TaskComp(control, wxID_ANY, task, {getProjectId(), this});
 
-    if (appCore.getCurrentProjectId() == m_projectId) {
+    if (appCore.getCurrentProjectId() == getProjectId()) {
         control->GetSizer()->Add(taskComp, SIZER_FLAGS);
     } else {
         taskComp->Hide();
@@ -163,5 +162,7 @@ wxString TaskProjectComp::getProjectName(bool gui) const {
 }
 
 std::uint32_t TaskProjectComp::getProjectId() const {
-    return m_projectId;
+    return m_taskList->taskListId;
 }
+
+} // namespace TodoList::AppGui

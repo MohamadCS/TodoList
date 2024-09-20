@@ -19,7 +19,8 @@
 #include <wx/scrolwin.h>
 #include <wx/statline.h>
 
-static TimePoint wxDateTimeToChrono(const wxDateTime& wxDate);
+namespace TodoList::Gui {
+static Core::TimePoint wxDateTimeToChrono(const wxDateTime& wxDate);
 
 void MainFrame::refreshSidebar() {
     m_sidebar.homePanel->Layout();
@@ -114,9 +115,9 @@ void MainFrame::addSidebar() {
 
     m_sidebar.sideBarPanel->SetBackgroundColour(wxColour(250, 250, 250));
 
-    auto& appCore = AppCore::instance();
-    m_sidebar.inboxProject = new TaskProjectComp(m_sidebar.homePanel, wxID_ANY, appCore.generateProjectId(), "Inbox");
-    m_sidebar.todayProject = new TaskProjectComp(m_sidebar.homePanel, wxID_ANY, appCore.generateProjectId(), "Today");
+    auto& appCore = Core::App::instance();
+    m_sidebar.inboxProject = new TaskProjectComp(m_sidebar.homePanel, wxID_ANY, "Inbox");
+    m_sidebar.todayProject = new TaskProjectComp(m_sidebar.homePanel, wxID_ANY, "Today");
 
     m_sidebar.homeBoxSizer->Add(m_sidebar.inboxProject, wxSizerFlags(0).FixedMinSize().Border(wxALL, 5).Expand());
     m_sidebar.homeBoxSizer->Add(m_sidebar.todayProject, wxSizerFlags(0).FixedMinSize().Border(wxALL, 5).Expand());
@@ -205,7 +206,7 @@ void MainFrame::setProject(TaskProjectComp* newProject) {
 }
 
 void MainFrame::onAddTaskButtonClicked(wxCommandEvent& ev) {
-    auto& appCore = AppCore::instance();
+    auto& appCore = Core::App::instance();
     auto* currentProject = m_taskPanel.currentTaskCompList;
     auto* taskCompPtr = currentProject->addTask(m_taskPanel.bottomPanel);
 
@@ -216,9 +217,8 @@ void MainFrame::onAddTaskButtonClicked(wxCommandEvent& ev) {
 }
 
 void MainFrame::onAddProjectButtonClicked(wxCommandEvent& ev) {
-    auto& appCore = AppCore::instance();
-    auto* newProject =
-        new TaskProjectComp(m_sidebar.projectsPanel, wxID_ANY, appCore.generateProjectId(), "Empty Project");
+    auto& appCore = Core::App::instance();
+    auto* newProject = new TaskProjectComp(m_sidebar.projectsPanel, wxID_ANY, "Empty Project");
     wxLogDebug("Added Project with ID: %d", newProject->getProjectId());
     m_sidebar.projectsList.push_back(newProject);
     m_sidebar.projectsBoxSizer->Add(newProject, wxSizerFlags(0).FixedMinSize().Border(wxALL, 5).Expand());
@@ -264,7 +264,7 @@ void MainFrame::onCalDialogDonePressed(wxCommandEvent& ev) {
     auto calDate = m_calDialog.calender->GetDate();
     auto calDateChrono = wxDateTimeToChrono(calDate);
     wxStaticText* staticTextPtr = nullptr;
-    TimePoint* timePointPtr = nullptr;
+    Core::TimePoint* timePointPtr = nullptr;
 
     switch (dateChanging) {
     case TaskComp::ChangingDate::DUO_DATE:
@@ -312,7 +312,7 @@ void MainFrame::onProjectNameChanged(wxCommandEvent&) {
     m_taskPanel.currentTaskCompList->Layout();
 }
 
-static TimePoint wxDateTimeToChrono(const wxDateTime& wxDate) {
+static Core::TimePoint wxDateTimeToChrono(const wxDateTime& wxDate) {
     wxLogDebug("Converting time to chrono");
     std::tm tm{};
 
@@ -323,3 +323,4 @@ static TimePoint wxDateTimeToChrono(const wxDateTime& wxDate) {
     std::time_t time_t_date = std::mktime(&tm);
     return std::chrono::system_clock::from_time_t(time_t_date);
 }
+} // namespace TodoList::Gui

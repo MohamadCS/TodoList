@@ -11,14 +11,14 @@
 #include <wx/panel.h>
 #include <wx/sizer.h>
 
+namespace TodoList::Gui {
 struct TaskComp;
 
 class TaskProjectComp : public wxPanel {
 public:
-    TaskProjectComp(wxWindow* parent, wxWindowID id, std::uint32_t projectId,
-                    const std::optional<std::string>& = std::nullopt,
-                    std::optional<TaskList*> taskList = std::nullopt, const wxPoint& postion = wxDefaultPosition,
-                    const wxSize& size = DEFAULT_SIZE);
+    TaskProjectComp(wxWindow* parent, wxWindowID id, const std::optional<std::string>& = std::nullopt,
+                    std::optional<Core::TaskList*> taskList = std::nullopt,
+                    const wxPoint& postion = wxDefaultPosition, const wxSize& size = DEFAULT_SIZE);
 
     void setProjectName(const wxString&, bool guiOnly = false);
     wxString getProjectName(bool gui = false) const;
@@ -27,12 +27,11 @@ public:
     void select(wxBoxSizer*);
     void unselect(wxBoxSizer*);
 
-    TaskComp* addTask(wxPanel*, std::optional<Task*> task = std::nullopt);
+    TaskComp* addTask(wxPanel*, std::optional<Core::Task*> task = std::nullopt);
 
 private:
-    std::uint32_t m_projectId;
     bool m_isCurrentProject;
-    TaskList* m_taskList;
+    Core::TaskList* m_taskList;
     std::vector<TaskComp*> m_taskListComp;
     wxBoxSizer* m_mainSizer;
     wxStaticText* m_projectNameText;
@@ -52,3 +51,5 @@ private:
     void onPaint(wxPaintEvent&);
     void paintNow();
 };
+
+} // namespace TodoList::AppGui
