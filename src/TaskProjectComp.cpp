@@ -19,6 +19,7 @@ TaskProjectComp::TaskProjectComp(wxWindow* parent, wxWindowID id, const std::opt
       m_isCurrentProject(false) {
 
     SetName("Project Panel");
+    SetSizer(new wxBoxSizer(wxVERTICAL));
 
     auto& appCore = Core::App::instance();
     m_taskList = taskList.value_or(appCore.newTaskList());
@@ -28,15 +29,12 @@ TaskProjectComp::TaskProjectComp(wxWindow* parent, wxWindowID id, const std::opt
     setControlsLayout();
     setBindings();
     setStyle();
-
-    SetSizerAndFit(m_mainSizer);
+    Fit();
 }
 
 void TaskProjectComp::allocateControls() {
     m_projectNameText =
         new wxStaticText(this, wxID_ANY, getProjectName(), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL);
-
-    m_mainSizer = new wxBoxSizer(wxVERTICAL);
 }
 
 void TaskProjectComp::setBindings() {
@@ -47,9 +45,9 @@ void TaskProjectComp::setBindings() {
 void TaskProjectComp::setControlsLayout() {
     SetMinSize(DEFAULT_SIZE);
 
-    m_mainSizer->AddStretchSpacer(1);
-    m_mainSizer->Add(m_projectNameText, wxSizerFlags(1).Expand().FixedMinSize());
-    m_mainSizer->AddStretchSpacer(1);
+    GetSizer()->AddStretchSpacer(1);
+    GetSizer()->Add(m_projectNameText, wxSizerFlags(1).Expand().FixedMinSize());
+    GetSizer()->AddStretchSpacer(1);
 }
 
 void TaskProjectComp::setStyle() {
@@ -71,7 +69,7 @@ void TaskProjectComp::onPanelLeftClick(wxMouseEvent& ev) {
     ev.Skip();
 }
 
-void TaskProjectComp::showProject(wxBoxSizer* sizer) {
+void TaskProjectComp::showProject(wxSizer* sizer) {
 
     auto add_comp = [&sizer, this](auto&& control) mutable {
         if (control != nullptr) {
@@ -92,7 +90,7 @@ void TaskProjectComp::showProject(wxBoxSizer* sizer) {
     Utility::refresh(this);
 }
 
-void TaskProjectComp::hideProject(wxBoxSizer* sizer) {
+void TaskProjectComp::hideProject(wxSizer* sizer) {
 
     auto detach_comp = [&sizer](auto&& control) mutable {
         if (control != nullptr) {

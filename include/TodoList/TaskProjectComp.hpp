@@ -43,15 +43,15 @@ public:
 
     TaskComp* addTask(wxPanel*, std::optional<Core::Task*> task = std::nullopt);
 
-    void showProject(wxBoxSizer*);
+    void showProject(wxSizer*);
 
-    void hideProject(wxBoxSizer*);
+    void hideProject(wxSizer*);
 
 private:
     bool m_isCurrentProject;
     Core::TaskList* m_taskList;
     std::vector<TaskComp*> m_taskListComp;
-    wxBoxSizer* m_mainSizer;
+    // wxBoxSizer* m_mainSizer;
     wxStaticText* m_projectNameText;
 
     const wxColor unselectedColor = wxColor(250, 250, 250);

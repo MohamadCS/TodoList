@@ -26,7 +26,7 @@ struct TaskComp : public wxPanel {
     wxStaticText* deadLineText;
     wxTextCtrl* textCtrl;
     wxCheckBox* checkBox;
-    wxBoxSizer* mainSizer;
+    // wxBoxSizer* mainSizer;
     std::map<uint32_t, TaskProjectComp*> taskProjects;
     inline static const wxSize DEFAULT_SIZE = wxSize(200, 40);
 

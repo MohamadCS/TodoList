@@ -3,8 +3,10 @@
 #include "Events.hpp"
 #include "TaskComp.hpp"
 #include "TaskProjectComp.hpp"
+#include "Defines.hpp"
 
 #include <utility>
+#include <cstdint>
 
 #include "wx/colour.h"
 #include "wx/gdicmn.h"
@@ -22,27 +24,16 @@
 namespace TodoList::Gui {
 
 struct Sidebar {
-    wxBoxSizer* sidebarBoxSizer;
-    wxBoxSizer* homeBoxSizer;
-    wxBoxSizer* projectsBoxSizer;
-
     wxPanel* sideBarPanel;
     wxPanel* homePanel;
     wxScrolled<wxPanel>* projectsPanel;
-
     wxButton* addProjectButton;
+
     wxStaticText* myProjectsText;
-
-    TaskProjectComp* todayProject;
-    TaskProjectComp* inboxProject;
-
     std::vector<TaskProjectComp*> projectsList;
 };
 
 struct TaskPanel {
-    wxBoxSizer* taskPanelBoxSizer;
-    wxBoxSizer* topBoxSizer;
-    wxBoxSizer* bottomBoxSizer;
     wxPanel* taskPanel;
     wxPanel* topPanel;
     wxScrolled<wxPanel>* bottomPanel;
@@ -121,7 +112,7 @@ MainFrame::MainFrame(Args... args)
     SetClientSize(DEFAULT_FRAME_DIMS);
     SetMinClientSize(DEFAULT_FRAME_DIMS);
     SetBackgroundColour(wxColor(255, 255, 255));
-    setProject(m_sidebar.inboxProject);
+    setProject(m_sidebar.projectsList[static_cast<int>(Utility::DEFAULT_PROJECTS::INBOX)]);
 }
 
 } // namespace TodoList::Gui

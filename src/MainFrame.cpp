@@ -34,13 +34,14 @@ void MainFrame::refreshTaskPanel() {
 
 void MainFrame::addTaskPanel() {
     wxLogDebug("Adding Task Panel");
-    m_taskPanel.taskPanelBoxSizer = new wxBoxSizer(wxVERTICAL);
-    m_taskPanel.topBoxSizer = new wxBoxSizer(wxHORIZONTAL);
-    m_taskPanel.bottomBoxSizer = new wxBoxSizer(wxVERTICAL);
 
     m_taskPanel.taskPanel = new wxPanel(m_mainSplitter);
     m_taskPanel.topPanel = new wxPanel(m_taskPanel.taskPanel);
     m_taskPanel.bottomPanel = new wxScrolled<wxPanel>(m_taskPanel.taskPanel);
+
+    m_taskPanel.taskPanel->SetSizer(new wxBoxSizer(wxVERTICAL));
+    m_taskPanel.topPanel->SetSizer(new wxBoxSizer(wxHORIZONTAL));
+    m_taskPanel.bottomPanel->SetSizer(new wxBoxSizer(wxVERTICAL));
 
     m_taskPanel.bottomPanel->SetScrollRate(5, 5); // change to 0 horizontal scroll
 
@@ -48,12 +49,8 @@ void MainFrame::addTaskPanel() {
 
     m_taskPanel.bottomPanel->SetMinSize(wxSize(200, 200));
 
-    m_taskPanel.taskPanelBoxSizer->Add(m_taskPanel.topPanel, wxSizerFlags(1).Expand().FixedMinSize());
-    m_taskPanel.taskPanelBoxSizer->Add(m_taskPanel.bottomPanel, wxSizerFlags(7).Expand());
-
-    m_taskPanel.taskPanel->SetSizerAndFit(m_taskPanel.taskPanelBoxSizer);
-    m_taskPanel.topPanel->SetSizerAndFit(m_taskPanel.topBoxSizer);
-    m_taskPanel.bottomPanel->SetSizerAndFit(m_taskPanel.bottomBoxSizer);
+    m_taskPanel.taskPanel->GetSizer()->Add(m_taskPanel.topPanel, wxSizerFlags(1).Expand().FixedMinSize());
+    m_taskPanel.taskPanel->GetSizer()->Add(m_taskPanel.bottomPanel, wxSizerFlags(7).Expand());
 
     m_taskPanel.addTaskButton = new wxButton(m_taskPanel.topPanel, wxID_ANY, "Add Task");
     auto textStyle = wxBORDER_NONE | wxTE_WORDWRAP | wxTE_PROCESS_ENTER;
@@ -65,10 +62,10 @@ void MainFrame::addTaskPanel() {
     wxFont font(24, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
     m_taskPanel.projectNameTextCtrl->SetFont(font);
 
-    m_taskPanel.topBoxSizer->AddSpacer(10);
-    m_taskPanel.topBoxSizer->Add(m_taskPanel.projectNameTextCtrl, 1, wxALIGN_CENTER_VERTICAL | wxALL, 10);
-    m_taskPanel.topBoxSizer->Add(m_taskPanel.addTaskButton, wxSizerFlags(0).CenterVertical());
-    m_taskPanel.topBoxSizer->AddSpacer(10);
+    m_taskPanel.topPanel->GetSizer()->AddSpacer(10);
+    m_taskPanel.topPanel->GetSizer()->Add(m_taskPanel.projectNameTextCtrl, 1, wxALIGN_CENTER_VERTICAL | wxALL, 10);
+    m_taskPanel.topPanel->GetSizer()->Add(m_taskPanel.addTaskButton, wxSizerFlags(0).CenterVertical());
+    m_taskPanel.topPanel->GetSizer()->AddSpacer(10);
 
     m_taskPanel.taskPanel->SetBackgroundColour(wxColor(255, 255, 255));
     m_taskPanel.projectNameTextCtrl->Bind(wxEVT_TEXT, &MainFrame::onProjectNameChanged, this);
@@ -87,13 +84,13 @@ void MainFrame::addTaskPanel() {
 void MainFrame::addSidebar() {
     wxLogDebug("Adding Sidebar Panel");
 
-    m_sidebar.sidebarBoxSizer = new wxBoxSizer(wxVERTICAL);
-    m_sidebar.projectsBoxSizer = new wxBoxSizer(wxVERTICAL);
-    m_sidebar.homeBoxSizer = new wxBoxSizer(wxVERTICAL);
-
     m_sidebar.sideBarPanel = new wxPanel(m_mainSplitter);
     m_sidebar.homePanel = new wxPanel(m_sidebar.sideBarPanel, wxID_ANY, wxDefaultPosition);
     m_sidebar.projectsPanel = new wxScrolled<wxPanel>(m_sidebar.sideBarPanel, wxID_ANY, wxDefaultPosition);
+
+    m_sidebar.sideBarPanel->SetSizerAndFit(new wxBoxSizer(wxVERTICAL));
+    m_sidebar.projectsPanel->SetSizerAndFit(new wxBoxSizer(wxVERTICAL));
+    m_sidebar.homePanel->SetSizerAndFit(new wxBoxSizer(wxVERTICAL));
 
     m_sidebar.projectsPanel->SetScrollRate(5, 5); // change to 0 horizontal scroll
 
@@ -101,24 +98,19 @@ void MainFrame::addSidebar() {
     m_sidebar.homePanel->SetName("Home Panel");
     m_sidebar.sideBarPanel->SetName("Sidebar Panel");
 
-    m_sidebar.sidebarBoxSizer->Add(m_sidebar.homePanel, wxSizerFlags().Expand().Proportion(1));
-    m_sidebar.sidebarBoxSizer->Add(m_sidebar.projectsPanel, wxSizerFlags().Expand().Proportion(2));
-
-    m_sidebar.homePanel->SetSizerAndFit(m_sidebar.homeBoxSizer);
-    m_sidebar.projectsPanel->SetSizerAndFit(m_sidebar.projectsBoxSizer);
-    m_sidebar.sideBarPanel->SetSizerAndFit(m_sidebar.sidebarBoxSizer);
+    m_sidebar.sideBarPanel->GetSizer()->Add(m_sidebar.homePanel, wxSizerFlags().Expand().Proportion(1));
+    m_sidebar.sideBarPanel->GetSizer()->Add(m_sidebar.projectsPanel, wxSizerFlags().Expand().Proportion(2));
 
     m_sidebar.sideBarPanel->SetBackgroundColour(wxColour(250, 250, 250));
 
     auto& appCore = Core::App::instance();
-    m_sidebar.inboxProject = new TaskProjectComp(m_sidebar.homePanel, wxID_ANY, "Inbox");
-    m_sidebar.todayProject = new TaskProjectComp(m_sidebar.homePanel, wxID_ANY, "Today");
+    m_sidebar.projectsList.push_back(new TaskProjectComp(m_sidebar.homePanel, wxID_ANY, "Inbox"));
+    m_sidebar.projectsList.push_back(new TaskProjectComp(m_sidebar.homePanel, wxID_ANY, "Today"));
 
-    m_sidebar.homeBoxSizer->Add(m_sidebar.inboxProject, wxSizerFlags(0).FixedMinSize().Border(wxALL, 5).Expand());
-    m_sidebar.homeBoxSizer->Add(m_sidebar.todayProject, wxSizerFlags(0).FixedMinSize().Border(wxALL, 5).Expand());
-
-    m_sidebar.projectsList.push_back(m_sidebar.inboxProject);
-    m_sidebar.projectsList.push_back(m_sidebar.todayProject);
+    m_sidebar.homePanel->GetSizer()->Add(m_sidebar.projectsList[static_cast<int>(Utility::DEFAULT_PROJECTS::TODAY)],
+                                         wxSizerFlags(0).FixedMinSize().Border(wxALL, 5).Expand());
+    m_sidebar.homePanel->GetSizer()->Add(m_sidebar.projectsList[static_cast<int>(Utility::DEFAULT_PROJECTS::INBOX)],
+                                         wxSizerFlags(0).FixedMinSize().Border(wxALL, 5).Expand());
 
     m_sidebar.myProjectsText = new wxStaticText(m_sidebar.homePanel, wxID_ANY, "My Projects");
     wxFont font(14, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
@@ -127,11 +119,11 @@ void MainFrame::addSidebar() {
     m_sidebar.addProjectButton = new wxButton(m_sidebar.homePanel, wxID_ANY, "Add Project");
     m_sidebar.addProjectButton->Bind(wxEVT_BUTTON, &MainFrame::onAddProjectButtonClicked, this);
 
-    m_sidebar.homeBoxSizer->AddSpacer(10);
-    m_sidebar.homeBoxSizer->Add(m_sidebar.addProjectButton, wxSizerFlags().CenterHorizontal());
-    m_sidebar.homeBoxSizer->AddSpacer(20);
-    m_sidebar.homeBoxSizer->Add(m_sidebar.myProjectsText, wxSizerFlags().Border(wxLEFT, 10));
-    m_sidebar.homeBoxSizer->AddSpacer(10);
+    m_sidebar.homePanel->GetSizer()->AddSpacer(10);
+    m_sidebar.homePanel->GetSizer()->Add(m_sidebar.addProjectButton, wxSizerFlags().CenterHorizontal());
+    m_sidebar.homePanel->GetSizer()->AddSpacer(20);
+    m_sidebar.homePanel->GetSizer()->Add(m_sidebar.myProjectsText, wxSizerFlags().Border(wxLEFT, 10));
+    m_sidebar.homePanel->GetSizer()->AddSpacer(10);
 
     refreshSidebar();
     wxLogDebug("Finished Sidebar");
@@ -186,10 +178,10 @@ void MainFrame::setProject(TaskProjectComp* newProject) {
     }
 
     if (m_taskPanel.currentTaskCompList != nullptr) {
-        m_taskPanel.currentTaskCompList->hideProject(m_taskPanel.bottomBoxSizer);
+        m_taskPanel.currentTaskCompList->hideProject(m_taskPanel.bottomPanel->GetSizer());
     }
     m_taskPanel.currentTaskCompList = newProject;
-    m_taskPanel.currentTaskCompList->showProject(m_taskPanel.bottomBoxSizer);
+    m_taskPanel.currentTaskCompList->showProject(m_taskPanel.bottomPanel->GetSizer());
     m_taskPanel.projectNameTextCtrl->SetValue(m_taskPanel.currentTaskCompList->getProjectName());
 
     m_taskPanel.bottomPanel->Scroll(0, 0);
@@ -217,7 +209,7 @@ void MainFrame::onAddProjectButtonClicked(wxCommandEvent& ev) {
     wxLogDebug("Added Project with ID: %d", newProject->getProjectId());
 
     m_sidebar.projectsList.push_back(newProject);
-    m_sidebar.projectsBoxSizer->Add(newProject, wxSizerFlags(0).FixedMinSize().Border(wxALL, 5).Expand());
+    m_sidebar.projectsPanel->GetSizer()->Add(newProject, wxSizerFlags(0).FixedMinSize().Border(wxALL, 5).Expand());
 
     setProject(newProject);
 
@@ -235,7 +227,7 @@ void MainFrame::onTaskChecked(wxCommandEvent& ev) {
         wxLogDebug("Nullptr from %s", __FUNCTION__);
     }
 
-    m_taskPanel.bottomBoxSizer->Detach(taskCompPtr);
+    m_taskPanel.bottomPanel->GetSizer()->Detach(taskCompPtr);
     taskCompPtr->Hide();
     refreshTaskPanel();
 }

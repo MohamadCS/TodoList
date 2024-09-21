@@ -16,7 +16,7 @@
 #include <wx/sizer.h>
 #include <wx/textctrl.h>
 
-static void showSizer(wxBoxSizer* sizer, bool state = true);
+static void showSizer(wxSizer* sizer, bool state = true);
 static void onReturnPressed(TodoList::Gui::TaskComp* taskComp);
 static void onEscapePressed(TodoList::Gui::TaskComp* taskComp);
 
@@ -30,17 +30,18 @@ TaskComp::TaskComp(wxWindow* parent, wxWindowID id, Core::Task* taskPtr,
     taskProjects.insert_or_assign(taskProject.first, taskProject.second);
     SetName("Task");
     SetMinSize(DEFAULT_SIZE);
+    SetSizer(new wxBoxSizer(wxHORIZONTAL));
     allocateControls();
     setControlsLayout();
     setBindings();
     setStyle();
-    SetSizer(mainSizer);
+
+    Fit();
 
     Utility::refresh(this);
 }
 
 void TaskComp::allocateControls() {
-    mainSizer = new wxBoxSizer(wxHORIZONTAL);
 
     checkBox = new wxCheckBox(this, wxID_ANY, "");
 
@@ -55,11 +56,11 @@ void TaskComp::allocateControls() {
 
 void TaskComp::setControlsLayout() {
     textCtrl->Hide();
-    mainSizer->Add(checkBox, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxALIGN_LEFT, 10);
-    mainSizer->Add(taskText, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxALIGN_LEFT, 10);
-    mainSizer->AddStretchSpacer();
-    mainSizer->Add(duoDateText, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 10);
-    mainSizer->Add(textCtrl, 1, wxALIGN_CENTER_VERTICAL | wxALL, 10);
+    GetSizer()->Add(checkBox, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxALIGN_LEFT, 10);
+    GetSizer()->Add(taskText, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxALIGN_LEFT, 10);
+    GetSizer()->AddStretchSpacer();
+    GetSizer()->Add(duoDateText, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 10);
+    GetSizer()->Add(textCtrl, 1, wxALIGN_CENTER_VERTICAL | wxALL, 10);
 }
 
 void TaskComp::setBindings() {
@@ -86,7 +87,7 @@ void TaskComp::setStyle() {
 }
 
 void TaskComp::onPanelDoubleLeftClick(wxMouseEvent& ev) {
-    auto& children = mainSizer->GetChildren();
+    auto& children = GetSizer()->GetChildren();
     std::for_each(children.begin(), children.end(), [](auto& child) { child->Show(false); });
     textCtrl->Show();
     textCtrl->SetFocus();
@@ -108,7 +109,7 @@ void TaskComp::onKeyPressedTextCtrl(wxKeyEvent& keyEv) {
 }
 
 void TaskComp::cancelTextInsertion() {
-    showSizer(mainSizer, true);
+    showSizer(GetSizer(), true);
     textCtrl->Hide();
     taskText->SetLabel(textCtrl->GetValue());
 }
@@ -143,7 +144,7 @@ void TaskComp::onDuoDateDoubleLeftClick(wxMouseEvent& ev) {
 
 } // namespace TodoList::Gui
 
-static void showSizer(wxBoxSizer* sizer, bool state) {
+static void showSizer(wxSizer* sizer, bool state) {
 
     if (sizer == nullptr) {
         wxLogDebug("Got Null");
@@ -161,7 +162,7 @@ static void onReturnPressed(TodoList::Gui::TaskComp* taskComp) {
         exit(0);
     }
 
-    showSizer(taskComp->mainSizer, true);
+    showSizer(taskComp->GetSizer(), true);
     taskComp->textCtrl->Hide();
     taskComp->taskText->SetLabel(taskComp->textCtrl->GetValue());
     TodoList::Utility::refresh(taskComp);
