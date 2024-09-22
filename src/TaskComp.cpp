@@ -2,11 +2,11 @@
 #include "../include/TodoList/Utils.hpp"
 
 #include <algorithm>
-#include <cstdint>
 #include <map>
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <utility>
 #include <wx/button.h>
 #include <wx/colour.h>
 #include <wx/dc.h>
@@ -23,19 +23,21 @@ static void onEscapePressed(TodoList::Gui::TaskComp* taskComp);
 namespace TodoList::Gui {
 
 TaskComp::TaskComp(wxWindow* parent, wxWindowID id, Core::Task* taskPtr,
-                   std::pair<uint32_t, TaskProjectComp*> taskProject, const wxPoint& postion, const wxSize& size)
+                   std::pair<Core::ID, TaskProjectComp*> taskProject, const wxPoint& postion, const wxSize& size)
     : wxPanel(parent, id, postion, size),
       task(taskPtr) {
 
-    taskProjects.insert_or_assign(taskProject.first, taskProject.second);
+    // taskProjects.insert_or_assign(taskProject.first, taskProject.second);
     SetName("Task");
     SetMinSize(DEFAULT_SIZE);
     SetSizer(new wxBoxSizer(wxHORIZONTAL));
+
     allocateControls();
     setControlsLayout();
     setBindings();
     setStyle();
 
+    setStateDefault();
     Fit();
 
     Utility::refresh(this);
@@ -51,16 +53,20 @@ void TaskComp::allocateControls() {
 
     textCtrl = new wxTextCtrl(this, wxID_ANY, task->taskText, wxDefaultPosition, wxDefaultSize, textStyle);
 
-    duoDateText = new wxStaticText(this, wxID_ANY, "No Date");
+    std::string dateText = "No Date";
+
+    if (auto dateTp = task->duoDate; task->duoDate.has_value()) {
+        dateText = Utility::timePointToStr(dateTp.value());
+    }
+    duoDateText = new wxStaticText(this, wxID_ANY, dateText);
 }
 
 void TaskComp::setControlsLayout() {
-    textCtrl->Hide();
     GetSizer()->Add(checkBox, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxALIGN_LEFT, 10);
     GetSizer()->Add(taskText, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxALIGN_LEFT, 10);
     GetSizer()->AddStretchSpacer();
     GetSizer()->Add(duoDateText, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 10);
-    GetSizer()->Add(textCtrl, 1, wxALIGN_CENTER_VERTICAL | wxALL, 10);
+    GetSizer()->Add(textCtrl, 1, wxEXPAND | wxALL, 10); // TODO: Consider wxExpand
 }
 
 void TaskComp::setBindings() {
@@ -87,10 +93,7 @@ void TaskComp::setStyle() {
 }
 
 void TaskComp::onPanelDoubleLeftClick(wxMouseEvent& ev) {
-    auto& children = GetSizer()->GetChildren();
-    std::for_each(children.begin(), children.end(), [](auto& child) { child->Show(false); });
-    textCtrl->Show();
-    textCtrl->SetFocus();
+    setStateChangingText();
     ev.Skip();
 }
 
@@ -109,16 +112,15 @@ void TaskComp::onKeyPressedTextCtrl(wxKeyEvent& keyEv) {
 }
 
 void TaskComp::cancelTextInsertion() {
-    showSizer(GetSizer(), true);
-    textCtrl->Hide();
-    taskText->SetLabel(textCtrl->GetValue());
+    setStateDefault();
+    setText(textCtrl->GetValue());
 }
 
 void TaskComp::onPaint(wxPaintEvent& ev) {
     wxPaintDC dc(this);
 
     // Draw the background
-    auto color = wxColor(250, 250, 250);
+    const auto color = wxColor(250, 250, 250);
     dc.SetBrush(color);
     dc.SetPen(*wxTRANSPARENT_PEN);
     dc.DrawRoundedRectangle(wxRect(wxDefaultPosition, GetSize()), 10);
@@ -137,9 +139,47 @@ void TaskComp::onCheckBoxClick(wxCommandEvent& ev) {
 void TaskComp::onDuoDateDoubleLeftClick(wxMouseEvent& ev) {
     wxLogDebug("Duo date double left clicked");
     wxCommandEvent projectChangeEvent{EVT_REQUEST_CAL_DIALOG};
-    projectChangeEvent.SetClientData(new std::pair<TaskComp*, ChangingDate>{this, ChangingDate::DUO_DATE});
+    projectChangeEvent.SetClientData(new std::pair<TaskComp*, Date>{this, Date::DUO_DATE});
     wxPostEvent(this, std::move(projectChangeEvent));
     Utility::refresh(this->GetParent());
+}
+
+void TaskComp::setDate(const Core::TimePoint& timePoint, Date dateType) {
+    const std::string dateText = Utility::timePointToStr(timePoint);
+
+    switch (dateType) {
+    case Date::DUO_DATE:
+        duoDateText->SetLabel(dateText);
+        task->duoDate = timePoint;
+        break;
+    case Date::DEADLINE_DATE:
+        duoDateText->SetLabel(dateText);
+        task->deadLine = timePoint;
+        break;
+    default:
+        std::unreachable();
+        break;
+    }
+
+    Utility::refresh(std::make_tuple(duoDateText, this));
+}
+
+void TaskComp::setStateDefault() {
+    auto& children = GetSizer()->GetChildren();
+    std::for_each(children.begin(), children.end(), [](auto& child) { child->Show(true); });
+    textCtrl->Hide();
+}
+
+void TaskComp::setStateChangingText() {
+    auto& children = GetSizer()->GetChildren();
+    std::for_each(children.begin(), children.end(), [](auto& child) { child->Show(false); });
+    textCtrl->Show();
+    textCtrl->SetFocus();
+}
+
+void TaskComp::setText(const wxString& text){
+    taskText->SetLabel(text);
+    task->taskText = text;
 }
 
 } // namespace TodoList::Gui
@@ -162,8 +202,9 @@ static void onReturnPressed(TodoList::Gui::TaskComp* taskComp) {
         exit(0);
     }
 
-    showSizer(taskComp->GetSizer(), true);
-    taskComp->textCtrl->Hide();
-    taskComp->taskText->SetLabel(taskComp->textCtrl->GetValue());
+    taskComp->setStateDefault();
+    taskComp->setText(taskComp->textCtrl->GetValue());
     TodoList::Utility::refresh(taskComp);
 }
+
+

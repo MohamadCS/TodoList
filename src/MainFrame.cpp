@@ -5,7 +5,7 @@
 
 #include <chrono>
 #include <ctime>
-#include <format>
+#include <functional>
 #include <tuple>
 #include <utility>
 
@@ -32,6 +32,160 @@ void MainFrame::refreshTaskPanel() {
     Utility::refresh(std::make_tuple(m_taskPanel.taskPanel));
 }
 
+void MainFrame::onProjectChange(wxCommandEvent& ev) {
+    wxLogDebug("Got a change project event");
+    auto* taskProjectCompPtr = static_cast<TaskProjectComp*>(ev.GetClientData());
+
+    if (taskProjectCompPtr == nullptr) {
+        wxLogDebug("Nullptr");
+    }
+
+    setProject(taskProjectCompPtr);
+}
+
+void MainFrame::setProject(TaskProjectComp* newProject) {
+    wxLogDebug("Changing Project");
+
+    if (newProject == nullptr) {
+        wxLogDebug("Nullptr");
+        exit(0);
+    }
+
+    if (m_taskPanel.currentTaskCompList != nullptr) {
+        m_taskPanel.currentTaskCompList->hideProject(m_taskPanel.bottomPanel->GetSizer());
+    }
+    m_taskPanel.currentTaskCompList = newProject;
+    m_taskPanel.currentTaskCompList->showProject(m_taskPanel.bottomPanel->GetSizer());
+    m_taskPanel.projectNameTextCtrl->SetValue(m_taskPanel.currentTaskCompList->getProjectName());
+
+    m_taskPanel.bottomPanel->Scroll(0, 0);
+
+    refreshSidebar();
+    refreshTaskPanel();
+
+    wxLogDebug("Changed Project");
+}
+
+void MainFrame::onAddTaskButtonClicked(wxCommandEvent& ev) {
+    auto mouseEvent = wxMouseEvent();
+
+    if (auto taskPtr = m_taskPanel.currentTaskCompList->addTask(m_taskPanel.bottomPanel); taskPtr) {
+        taskPtr.value()->onPanelDoubleLeftClick(mouseEvent);
+    } else {
+        std::unreachable();
+    }
+
+    refreshTaskPanel();
+}
+
+void MainFrame::onAddProjectButtonClicked(wxCommandEvent& ev) {
+    auto* newProject{new TaskProjectComp(m_sidebar.projectsPanel, wxID_ANY, "Empty Project")};
+
+    wxLogDebug("Added Project with ID: %d", newProject->getProjectId());
+
+    m_sidebar.projectsList.push_back(newProject);
+    m_sidebar.projectsPanel->GetSizer()->Add(newProject, wxSizerFlags(0).FixedMinSize().Border(wxALL, 5).Expand());
+
+    setProject(newProject);
+
+    m_taskPanel.projectNameTextCtrl->SetFocus();
+    m_taskPanel.projectNameTextCtrl->SetInsertionPointEnd();
+
+    refreshSidebar();
+}
+
+void MainFrame::onTaskChecked(wxCommandEvent& ev) {
+    wxLogDebug("Handling Checkbox checked");
+    auto* taskCompPtr = static_cast<TaskComp*>(ev.GetClientData());
+
+    if (taskCompPtr == nullptr) {
+        wxLogDebug("Nullptr from %s", __FUNCTION__);
+    }
+
+    m_taskPanel.bottomPanel->GetSizer()->Detach(taskCompPtr);
+    taskCompPtr->Hide();
+    refreshTaskPanel();
+}
+
+void MainFrame::onCalDialogRequest(wxCommandEvent& ev) {
+    wxLogDebug("Cal Dialog Requested");
+    auto* taskCompPtr{static_cast<std::pair<TaskComp*, TaskComp::Date>*>(ev.GetClientData())};
+
+    if (taskCompPtr == nullptr || taskCompPtr->first == nullptr) {
+        wxLogDebug("Task must not be null");
+    }
+    m_calDialog.currentTaskPair = taskCompPtr;
+    m_calDialog.calenderCtrl->SetDate(wxDateTime::Today());
+    m_calDialog.dialog->ShowModal();
+}
+
+void MainFrame::onCalDialogDonePressed(wxCommandEvent& ev) {
+    wxLogDebug("Date change done button pressed");
+    if (m_calDialog.currentTaskPair == nullptr) {
+        wxLogDebug("nullptr");
+    }
+
+    auto [taskCompPtr, dateChanging] = *m_calDialog.currentTaskPair;
+    auto calDate = m_calDialog.calenderCtrl->GetDate();
+    auto calDateChrono = wxDateTimeToChrono(calDate);
+
+    taskCompPtr->setDate(calDateChrono, dateChanging);
+
+    // updateToday(calDateChrono, taskCompPtr->task);
+    m_calDialog.dialog->EndModal(0);
+
+    ev.Skip();
+}
+
+void MainFrame::updateToday(const Core::TimePoint& timePoint, Core::Task* pTask) {
+    if (pTask == nullptr) {
+        wxLogDebug("nullptr");
+    }
+
+    if (m_taskPanel.currentTaskCompList->getProjectId() == m_sidebar.projectsList[Utility::TODAY_IDX]->getProjectId() ||
+        !Utility::isToday(timePoint)) {
+        return;
+    }
+
+    auto* todayProjectComp = m_sidebar.projectsList[Utility::TODAY_IDX];
+    todayProjectComp->addTask(m_taskPanel.bottomPanel, pTask);
+}
+
+} // namespace TodoList::Gui
+
+static TodoList::Core::TimePoint wxDateTimeToChrono(const wxDateTime& wxDate) {
+    wxLogDebug("Converting time to chrono");
+
+    std::tm tm{};
+
+    tm.tm_year = wxDate.GetYear();
+    tm.tm_mon = wxDate.GetMonth();
+    tm.tm_mday = wxDate.GetDay();
+
+    std::time_t time_t_date = std::mktime(&tm);
+    return std::chrono::system_clock::from_time_t(time_t_date);
+}
+
+// Intial Panel Impl
+
+namespace TodoList::Gui {
+
+void MainFrame::onProjectNameChanged(wxCommandEvent&) {
+
+    wxLogDebug("Changing Project's Name");
+
+    constexpr int maxSize{45};
+    auto name = m_taskPanel.projectNameTextCtrl->GetValue();
+    if (m_taskPanel.projectNameTextCtrl->GetValue().size() > maxSize) {
+        name = name.SubString(0, maxSize - 1);
+        m_taskPanel.projectNameTextCtrl->SetValue(name);
+        m_taskPanel.projectNameTextCtrl->SetInsertionPointEnd();
+    }
+
+    m_taskPanel.currentTaskCompList->setProjectName(name, true);
+    Utility::refresh(m_taskPanel.currentTaskCompList);
+}
+
 void MainFrame::addTaskPanel() {
     wxLogDebug("Adding Task Panel");
 
@@ -53,7 +207,7 @@ void MainFrame::addTaskPanel() {
     m_taskPanel.taskPanel->GetSizer()->Add(m_taskPanel.bottomPanel, wxSizerFlags(7).Expand());
 
     m_taskPanel.addTaskButton = new wxButton(m_taskPanel.topPanel, wxID_ANY, "Add Task");
-    auto textStyle = wxBORDER_NONE | wxTE_WORDWRAP | wxTE_PROCESS_ENTER;
+    auto textStyle{wxBORDER_NONE | wxTE_WORDWRAP | wxTE_PROCESS_ENTER};
     m_taskPanel.projectNameTextCtrl =
         new wxTextCtrl(m_taskPanel.topPanel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, textStyle);
 
@@ -104,12 +258,14 @@ void MainFrame::addSidebar() {
     m_sidebar.sideBarPanel->SetBackgroundColour(wxColour(250, 250, 250));
 
     auto& appCore = Core::App::instance();
-    m_sidebar.projectsList.push_back(new TaskProjectComp(m_sidebar.homePanel, wxID_ANY, "Inbox"));
-    m_sidebar.projectsList.push_back(new TaskProjectComp(m_sidebar.homePanel, wxID_ANY, "Today"));
+    m_sidebar.projectsList.resize(2);
 
-    m_sidebar.homePanel->GetSizer()->Add(m_sidebar.projectsList[static_cast<int>(Utility::DEFAULT_PROJECTS::TODAY)],
+    m_sidebar.projectsList[Utility::INBOX_IDX] = new TaskProjectComp(m_sidebar.homePanel, wxID_ANY, "Inbox");
+    m_sidebar.projectsList[Utility::TODAY_IDX] = new TaskProjectComp(m_sidebar.homePanel, wxID_ANY, "Today");
+
+    m_sidebar.homePanel->GetSizer()->Add(m_sidebar.projectsList[Utility::INBOX_IDX],
                                          wxSizerFlags(0).FixedMinSize().Border(wxALL, 5).Expand());
-    m_sidebar.homePanel->GetSizer()->Add(m_sidebar.projectsList[static_cast<int>(Utility::DEFAULT_PROJECTS::INBOX)],
+    m_sidebar.homePanel->GetSizer()->Add(m_sidebar.projectsList[Utility::TODAY_IDX],
                                          wxSizerFlags(0).FixedMinSize().Border(wxALL, 5).Expand());
 
     m_sidebar.myProjectsText = new wxStaticText(m_sidebar.homePanel, wxID_ANY, "My Projects");
@@ -132,17 +288,16 @@ void MainFrame::addSidebar() {
 void MainFrame::addCalDialog() {
     wxLogDebug("Adding Cal Dialog");
     m_calDialog.dialog = new wxDialog(this, wxID_ANY, "Set Date", wxDefaultPosition, wxDefaultSize);
-    m_calDialog.mainSizer = new wxBoxSizer(wxVERTICAL);
-    m_calDialog.calender = new wxCalendarCtrl(m_calDialog.dialog, wxID_ANY);
+    m_calDialog.calenderCtrl = new wxCalendarCtrl(m_calDialog.dialog, wxID_ANY);
     m_calDialog.doneButton = new wxButton(m_calDialog.dialog, wxID_ANY, "Done");
     m_calDialog.cancelButton = new wxButton(m_calDialog.dialog, wxID_ANY, "Cancel");
+    m_calDialog.dialog->SetSizer(new wxBoxSizer(wxVERTICAL));
 
-    auto* buttonSizer = new wxBoxSizer(wxHORIZONTAL);
+    auto* buttonSizer{new wxBoxSizer(wxHORIZONTAL)};
 
-    m_calDialog.mainSizer->Add(m_calDialog.calender, wxSizerFlags().Expand().Proportion(2));
-    m_calDialog.mainSizer->Add(buttonSizer, wxSizerFlags().Expand().Proportion(1));
-
-    m_calDialog.mainSizer->AddStretchSpacer(1);
+    m_calDialog.dialog->GetSizer()->Add(m_calDialog.calenderCtrl, wxSizerFlags().Expand().Proportion(2));
+    m_calDialog.dialog->GetSizer()->Add(buttonSizer, wxSizerFlags().Expand().Proportion(1));
+    m_calDialog.dialog->GetSizer()->AddStretchSpacer(1);
 
     buttonSizer->AddStretchSpacer(2);
     buttonSizer->Add(m_calDialog.doneButton, wxSizerFlags(1));
@@ -150,166 +305,12 @@ void MainFrame::addCalDialog() {
     buttonSizer->Add(m_calDialog.cancelButton, wxSizerFlags(1));
     buttonSizer->AddStretchSpacer(2);
 
-    m_calDialog.dialog->SetSizer(m_calDialog.mainSizer);
-    m_calDialog.calender->SetDate(wxDateTime::Today());
+    m_calDialog.calenderCtrl->SetDate(wxDateTime::Today());
 
     m_calDialog.doneButton->Bind(wxEVT_BUTTON, [this](wxCommandEvent& ev) {
         std::invoke(&MainFrame::onCalDialogDonePressed, this, std::ref(ev));
     });
+
+    m_calDialog.dialog->Fit();
 }
-
-void MainFrame::onProjectChange(wxCommandEvent& ev) {
-    wxLogDebug("Got a change project event");
-    auto* taskProjectCompPtr = static_cast<TaskProjectComp*>(ev.GetClientData());
-
-    if (taskProjectCompPtr == nullptr) {
-        wxLogDebug("Nullptr");
-    }
-
-    setProject(taskProjectCompPtr);
-}
-
-void MainFrame::setProject(TaskProjectComp* newProject) {
-    wxLogDebug("Changing Project");
-
-    if (newProject == nullptr) {
-        wxLogDebug("Nullptr");
-        exit(0);
-    }
-
-    if (m_taskPanel.currentTaskCompList != nullptr) {
-        m_taskPanel.currentTaskCompList->hideProject(m_taskPanel.bottomPanel->GetSizer());
-    }
-    m_taskPanel.currentTaskCompList = newProject;
-    m_taskPanel.currentTaskCompList->showProject(m_taskPanel.bottomPanel->GetSizer());
-    m_taskPanel.projectNameTextCtrl->SetValue(m_taskPanel.currentTaskCompList->getProjectName());
-
-    m_taskPanel.bottomPanel->Scroll(0, 0);
-
-    refreshSidebar();
-    refreshTaskPanel();
-
-    wxLogDebug("Changed Project");
-}
-
-void MainFrame::onAddTaskButtonClicked(wxCommandEvent& ev) {
-    auto& appCore = Core::App::instance();
-    auto* currentProject = m_taskPanel.currentTaskCompList;
-    auto* taskCompPtr = currentProject->addTask(m_taskPanel.bottomPanel);
-
-    auto mouseEvent = wxMouseEvent();
-    taskCompPtr->onPanelDoubleLeftClick(mouseEvent);
-
-    refreshTaskPanel();
-}
-
-void MainFrame::onAddProjectButtonClicked(wxCommandEvent& ev) {
-    auto* newProject = new TaskProjectComp(m_sidebar.projectsPanel, wxID_ANY, "Empty Project");
-
-    wxLogDebug("Added Project with ID: %d", newProject->getProjectId());
-
-    m_sidebar.projectsList.push_back(newProject);
-    m_sidebar.projectsPanel->GetSizer()->Add(newProject, wxSizerFlags(0).FixedMinSize().Border(wxALL, 5).Expand());
-
-    setProject(newProject);
-
-    m_taskPanel.projectNameTextCtrl->SetFocus();
-    m_taskPanel.projectNameTextCtrl->SetInsertionPointEnd();
-
-    refreshSidebar();
-}
-
-void MainFrame::onTaskChecked(wxCommandEvent& ev) {
-    wxLogDebug("Handling Checkbox checked");
-    auto* taskCompPtr = static_cast<TaskComp*>(ev.GetClientData());
-
-    if (taskCompPtr == nullptr) {
-        wxLogDebug("Nullptr from %s", __FUNCTION__);
-    }
-
-    m_taskPanel.bottomPanel->GetSizer()->Detach(taskCompPtr);
-    taskCompPtr->Hide();
-    refreshTaskPanel();
-}
-
-void MainFrame::onCalDialogRequest(wxCommandEvent& ev) {
-    wxLogDebug("Cal Dialog Requested");
-    auto* taskCompPtr = static_cast<std::pair<TaskComp*, TaskComp::ChangingDate>*>(ev.GetClientData());
-
-    if (taskCompPtr == nullptr || taskCompPtr->first == nullptr) {
-        wxLogDebug("Task must not be null");
-    }
-    m_calDialog.currentTaskPair = taskCompPtr;
-    m_calDialog.calender->SetDate(wxDateTime::Today());
-    m_calDialog.dialog->ShowModal();
-}
-
-void MainFrame::onCalDialogDonePressed(wxCommandEvent& ev) {
-    wxLogDebug("Date change done button pressed");
-    if (m_calDialog.currentTaskPair == nullptr) {
-        wxLogDebug("nullptr");
-    }
-
-    auto [taskCompPtr, dateChanging] = *m_calDialog.currentTaskPair;
-    auto calDate = m_calDialog.calender->GetDate();
-    auto calDateChrono = wxDateTimeToChrono(calDate);
-
-    wxStaticText* staticTextPtr = nullptr;
-    Core::TimePoint* timePointPtr = nullptr;
-
-    switch (dateChanging) {
-    case TaskComp::ChangingDate::DUO_DATE:
-        staticTextPtr = taskCompPtr->duoDateText;
-        timePointPtr = &taskCompPtr->task->duoDate;
-        break;
-    case TaskComp::ChangingDate::DEADLINE_DATE:
-        staticTextPtr = taskCompPtr->deadLineText;
-        timePointPtr = &taskCompPtr->task->deadLine;
-        break;
-    default:
-        std::unreachable();
-        break;
-    };
-
-    if (staticTextPtr == nullptr || timePointPtr == nullptr) {
-        wxLogDebug("Got nullptr");
-        exit(0);
-    }
-
-    *timePointPtr = calDateChrono;
-    staticTextPtr->SetLabel(std::format("{:%d %B}", *timePointPtr));
-    TodoList::Utility::refresh(std::make_tuple(staticTextPtr, taskCompPtr));
-
-    m_calDialog.dialog->EndModal(0);
-    ev.Skip();
-}
-
-void MainFrame::onProjectNameChanged(wxCommandEvent&) {
-
-    wxLogDebug("Changing Project's Name");
-
-    constexpr int maxSize = 25;
-    auto name = m_taskPanel.projectNameTextCtrl->GetValue();
-    if (m_taskPanel.projectNameTextCtrl->GetValue().size() > maxSize) {
-        name = name.SubString(0, maxSize - 1);           // Trim to 30 characters
-        m_taskPanel.projectNameTextCtrl->SetValue(name); // Update the text control
-        m_taskPanel.projectNameTextCtrl->SetInsertionPointEnd();
-    }
-
-    m_taskPanel.currentTaskCompList->setProjectName(name, true);
-    Utility::refresh(m_taskPanel.currentTaskCompList);
-}
-
 } // namespace TodoList::Gui
-
-static TodoList::Core::TimePoint wxDateTimeToChrono(const wxDateTime& wxDate) {
-    wxLogDebug("Converting time to chrono");
-    std::tm tm{};
-
-    tm.tm_year = wxDate.GetYear();
-    tm.tm_mon = wxDate.GetMonth();
-    tm.tm_mday = wxDate.GetDay();
-
-    std::time_t time_t_date = std::mktime(&tm);
-    return std::chrono::system_clock::from_time_t(time_t_date);
-}

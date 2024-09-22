@@ -20,26 +20,32 @@ struct TaskProjectComp;
 
 struct TaskComp : public wxPanel {
 
+    enum class Date;
     Core::Task* task;
+
     wxStaticText* taskText;
     wxStaticText* duoDateText;
     wxStaticText* deadLineText;
+
     wxTextCtrl* textCtrl;
     wxCheckBox* checkBox;
-    // wxBoxSizer* mainSizer;
-    std::map<uint32_t, TaskProjectComp*> taskProjects;
     inline static const wxSize DEFAULT_SIZE = wxSize(200, 40);
 
-    enum class ChangingDate { DUO_DATE, DEADLINE_DATE };
+    TaskComp(wxWindow* parent, wxWindowID id, Core::Task* taskPtr, std::pair<Core::ID, TaskProjectComp*> taskProject,
+             const wxPoint& postion = wxDefaultPosition, const wxSize& size = DEFAULT_SIZE);
 
-    void setStyle();
+    void setText(const wxString&);
+    void setDate(const Core::TimePoint&, Date);
+    void setStateChangingText();
+    void setStateDefault();
+
+    // TODO: Consider making them static in the source file.
     void setBindings();
+    void setStyle();
     void allocateControls();
     void setControlsLayout();
-    void cancelTextInsertion();
 
-    TaskComp(wxWindow* parent, wxWindowID id, Core::Task* taskPtr, std::pair<uint32_t, TaskProjectComp*> taskProject,
-             const wxPoint& postion = wxDefaultPosition, const wxSize& size = DEFAULT_SIZE);
+    void cancelTextInsertion();
 
     // Event Handling
     void onPaint(wxPaintEvent& event);
@@ -47,6 +53,11 @@ struct TaskComp : public wxPanel {
     void onPanelDoubleLeftClick(wxMouseEvent&);
     void onCheckBoxClick(wxCommandEvent&);
     void onDuoDateDoubleLeftClick(wxMouseEvent&);
+
+    enum class Date {
+        DUO_DATE,
+        DEADLINE_DATE
+    };
 
 };
 } // namespace TodoList::Gui

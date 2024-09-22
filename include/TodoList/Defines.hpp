@@ -1,4 +1,5 @@
 #pragma once
+#include "AppCore.hpp"
 
 namespace TodoList::Utility {
 
@@ -8,10 +9,8 @@ enum class Views {
     LOGIN_FRAME
 };
 
-enum class DEFAULT_PROJECTS {
-    TODAY = 0,
-    INBOX,
-    SIZE,
-};
+// Project idx
+constexpr Core::ID TODAY_IDX = 0;
+constexpr Core::ID INBOX_IDX = 1;
 
 } // namespace TodoList::Utility

@@ -1,6 +1,6 @@
 #include "../include/TodoList/AppCore.hpp"
-#include <iostream>
 #include <memory>
+#include <optional>
 #include <utility>
 
 namespace TodoList::Core {
@@ -10,18 +10,16 @@ App& App::instance() {
     return app;
 }
 
-Task* App::newTask(const TimePoint& duoDate, const TimePoint& deadLine, const std::string& taskText,
-                    const std::string& taskDesc, bool checked, TaskList* taskList) {
-
-    if (taskList == nullptr) {
-        std::cerr << "Task Must Be in at least one task list" << '\n';
-    }
+Task* App::newTask(const std::string& taskText, const std::string& taskDesc, bool checked, TaskList* pTaskList,
+                   const std::optional<TimePoint>& duoDate, const std::optional<TimePoint>& deadLine) {
 
     Task task = {duoDate, deadLine, taskText, taskDesc, checked, m_taskIdCtr++};
-    auto taskPtr = std::make_unique<Task>(std::move(task));
-    auto* retVal = taskPtr.get();
-    m_tasks.push_back(std::move(taskPtr));
-    return retVal;
+    auto taskUniquePtr = std::make_unique<Task>(std::move(task));
+
+    auto* taskPtr = taskUniquePtr.get();
+    taskPtr->taskList = pTaskList;
+    m_tasks.push_back(std::move(taskUniquePtr));
+    return taskPtr;
 }
 
 TaskList* App::newTaskList() {
@@ -39,15 +37,17 @@ TaskList* App::newTaskList(TaskList&& taskList) {
     return retVal;
 }
 
-std::uint32_t App::generateProjectId() {
+ID App::generateProjectId() {
     return m_projectIdCtr++;
 }
 
-void App::setCurrentProjectId(std::uint32_t newProjectId) {
+void App::setCurrentProjectId(ID newProjectId) {
     m_currentProjectId = newProjectId;
 }
 
-std::uint32_t App::getCurrentProjectId() const {
+ID App::getCurrentProjectId() const {
     return m_currentProjectId;
 }
-} // namespace TodoList::AppCore
+
+} // namespace TodoList::Core
+//

@@ -3,8 +3,7 @@
 #include "Events.hpp"
 #include "TaskComp.hpp"
 
-#include <cstdint>
-
+#include <expected>
 #include <optional>
 #include <vector>
 #include <wx/event.h>
@@ -16,10 +15,13 @@ struct TaskComp;
 
 class TaskProjectComp : public wxPanel {
 public:
-    TaskProjectComp(wxWindow* parent, wxWindowID id, const std::optional<std::string>& = std::nullopt,
-                    std::optional<Core::TaskList*> taskList = std::nullopt,
-                    const wxPoint& postion = wxDefaultPosition, const wxSize& size = DEFAULT_SIZE);
+    enum class Error {
+        TASK_EXISTS
+    };
 
+    TaskProjectComp(wxWindow* parent, wxWindowID id, const std::optional<std::string>& = std::nullopt,
+                    std::optional<Core::TaskList*> taskList = std::nullopt, const wxPoint& postion = wxDefaultPosition,
+                    const wxSize& size = DEFAULT_SIZE);
 
     /**
      * @brief Set project name
@@ -32,16 +34,16 @@ public:
      * @brief Get project name Id
      *
      * @param gui false to get the Core::TaskList name, true gets the wxStaticText name.
-     * @return 
+     * @return
      */
     wxString getProjectName(bool gui = false) const;
 
     /**
      * @brief Returns Core::TaskList id.
      */
-    std::uint32_t getProjectId() const;
+    Core::ID getProjectId() const;
 
-    TaskComp* addTask(wxPanel*, std::optional<Core::Task*> task = std::nullopt);
+    std::expected<TaskComp*, Error> addTask(wxPanel*, std::optional<Core::Task*> task = std::nullopt);
 
     void showProject(wxSizer*);
 
@@ -51,12 +53,11 @@ private:
     bool m_isCurrentProject;
     Core::TaskList* m_taskList;
     std::vector<TaskComp*> m_taskListComp;
-    // wxBoxSizer* m_mainSizer;
     wxStaticText* m_projectNameText;
 
-    const wxColor unselectedColor = wxColor(250, 250, 250);
-    const wxColor selectedColor = wxColor(238, 238, 238);
-    const wxColor textColor = wxColor(0, 0, 0);
+    inline static const auto UNSELECTED_COLOR = wxColor(250, 250, 250);
+    inline static const auto SELECTED_COLOR = wxColor(238, 238, 238);
+    inline static const auto TEXT_COLOR = wxColor(0, 0, 0);
 
     inline static const wxSizerFlags SIZER_FLAGS = wxSizerFlags().Proportion(0).Expand().Border(wxALL, 10);
     inline static const wxSize DEFAULT_SIZE = wxSize(50, 50);
@@ -70,4 +71,4 @@ private:
     void paintNow();
 };
 
-} // namespace TodoList::AppGui
+} // namespace TodoList::Gui

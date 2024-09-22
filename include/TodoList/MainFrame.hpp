@@ -1,12 +1,12 @@
 #pragma once
 
+#include "AppCore.hpp"
+#include "Defines.hpp"
 #include "Events.hpp"
 #include "TaskComp.hpp"
 #include "TaskProjectComp.hpp"
-#include "Defines.hpp"
 
 #include <utility>
-#include <cstdint>
 
 #include "wx/colour.h"
 #include "wx/gdicmn.h"
@@ -28,7 +28,6 @@ struct Sidebar {
     wxPanel* homePanel;
     wxScrolled<wxPanel>* projectsPanel;
     wxButton* addProjectButton;
-
     wxStaticText* myProjectsText;
     std::vector<TaskProjectComp*> projectsList;
 };
@@ -46,9 +45,8 @@ struct CalanderDialog {
     wxDialog* dialog;
     wxButton* doneButton;
     wxButton* cancelButton;
-    wxCalendarCtrl* calender;
-    wxBoxSizer* mainSizer;
-    std::pair<TaskComp*, TaskComp::ChangingDate>* currentTaskPair = nullptr;
+    wxCalendarCtrl* calenderCtrl;
+    std::pair<TaskComp*, TaskComp::Date>* currentTaskPair = nullptr;
 };
 
 class MainFrame : public wxFrame {
@@ -77,6 +75,7 @@ private:
 
     void refreshSidebar();
     void refreshTaskPanel();
+    void updateToday(const Core::TimePoint&, Core::Task* task);
 
     // Events
     void onProjectChange(wxCommandEvent&);
@@ -107,12 +106,11 @@ MainFrame::MainFrame(Args... args)
     Bind(EVT_TASK_FINISHED, &MainFrame::onTaskChecked, this);
     Bind(EVT_REQUEST_CAL_DIALOG, &MainFrame::onCalDialogRequest, this);
 
-
     Layout();
     SetClientSize(DEFAULT_FRAME_DIMS);
     SetMinClientSize(DEFAULT_FRAME_DIMS);
     SetBackgroundColour(wxColor(255, 255, 255));
-    setProject(m_sidebar.projectsList[static_cast<int>(Utility::DEFAULT_PROJECTS::INBOX)]);
+    setProject(m_sidebar.projectsList[Utility::INBOX_IDX]);
 }
 
 } // namespace TodoList::Gui

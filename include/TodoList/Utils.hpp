@@ -1,15 +1,20 @@
 #pragma once
 
+#include "AppCore.hpp"
 #include <tuple>
 #include <utility>
+
 namespace TodoList::Utility {
+
+std::string timePointToStr(const Core::TimePoint& timePoint);
+
+bool isToday(const TodoList::Core::TimePoint& date); 
+
 template <class T>
 void refresh(const T& comp);
 
 template <class... Comps>
 void refresh(const std::tuple<Comps...>& components);
-
-
 
 template <class T>
 void refresh(const T& comp) {

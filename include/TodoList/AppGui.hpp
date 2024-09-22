@@ -25,5 +25,3 @@ private:
 };
 
 }; // namespace TodoList::Gui
-
-wxIMPLEMENT_APP(TodoList::Gui::AppGui);

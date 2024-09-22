@@ -1,15 +1,14 @@
 #include "../include/TodoList/TaskProjectComp.hpp"
 #include "../include/TodoList/Utils.hpp"
 #include <optional>
+#include <tuple>
+#include <utility>
 #include <wx/checkbox.h>
 #include <wx/event.h>
 #include <wx/gdicmn.h>
 #include <wx/log.h>
 #include <wx/sizer.h>
 #include <wx/window.h>
-
-#include <cstdint>
-#include <utility>
 
 namespace TodoList::Gui {
 
@@ -29,12 +28,13 @@ TaskProjectComp::TaskProjectComp(wxWindow* parent, wxWindowID id, const std::opt
     setControlsLayout();
     setBindings();
     setStyle();
+
     Fit();
 }
 
 void TaskProjectComp::allocateControls() {
-    m_projectNameText =
-        new wxStaticText(this, wxID_ANY, getProjectName(), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL);
+    m_projectNameText = new wxStaticText(this, wxID_ANY, getProjectName(), wxDefaultPosition, wxDefaultSize,
+                                         wxALIGN_CENTER_HORIZONTAL | wxST_ELLIPSIZE_END);
 }
 
 void TaskProjectComp::setBindings() {
@@ -51,7 +51,7 @@ void TaskProjectComp::setControlsLayout() {
 }
 
 void TaskProjectComp::setStyle() {
-    SetBackgroundColour(unselectedColor);
+    SetBackgroundColour(UNSELECTED_COLOR);
     SetWindowStyle(GetWindowStyle() | wxNO_BORDER);
 }
 
@@ -71,16 +71,12 @@ void TaskProjectComp::onPanelLeftClick(wxMouseEvent& ev) {
 
 void TaskProjectComp::showProject(wxSizer* sizer) {
 
-    auto add_comp = [&sizer, this](auto&& control) mutable {
-        if (control != nullptr) {
-            sizer->Add(std::forward<decltype(control)>(control), this->SIZER_FLAGS);
-            control->Show();
-        }
-    };
+    auto add_comp = [&sizer, this](auto&& control) mutable {};
 
     for (auto* taskCompPtr : m_taskListComp) {
         if (!taskCompPtr->task->checked) {
-            add_comp(taskCompPtr);
+            sizer->Add(taskCompPtr, SIZER_FLAGS);
+            taskCompPtr->Show();
         }
     }
 
@@ -92,27 +88,22 @@ void TaskProjectComp::showProject(wxSizer* sizer) {
 
 void TaskProjectComp::hideProject(wxSizer* sizer) {
 
-    auto detach_comp = [&sizer](auto&& control) mutable {
-        if (control != nullptr) {
-            sizer->Detach(std::forward<decltype(control)>(control));
-            control->Hide();
-        }
-    };
-
     for (auto* taskCompPtr : m_taskListComp) {
         taskCompPtr->cancelTextInsertion();
-        detach_comp(taskCompPtr);
+        sizer->Detach(taskCompPtr);
+        taskCompPtr->Hide();
     }
 
     m_isCurrentProject = false;
     Layout();
 }
 
-TaskComp* TaskProjectComp::addTask(wxPanel* control, std::optional<Core::Task*> optTask) {
+std::expected<TaskComp*, TaskProjectComp::Error> TaskProjectComp::addTask(wxPanel* control,
+                                                                          std::optional<Core::Task*> optTask) {
     wxLogDebug("Creating a new task");
 
     auto& appCore = Core::App::instance();
-    auto task = optTask.value_or(appCore.newTask({}, {}, "", "", false, m_taskList));
+    auto* task = optTask.value_or(appCore.newTask("", "", false, m_taskList));
     auto* taskComp = new TaskComp(control, wxID_ANY, task, {getProjectId(), this});
 
     if (appCore.getCurrentProjectId() == getProjectId()) {
@@ -123,14 +114,13 @@ TaskComp* TaskProjectComp::addTask(wxPanel* control, std::optional<Core::Task*> 
 
     m_taskListComp.push_back(taskComp);
 
-    Utility::refresh(this);
+    Utility::refresh(std::make_tuple(taskComp, this));
     return taskComp;
 }
 
 void TaskProjectComp::onPaint(wxPaintEvent&) {
     wxPaintDC dc(this);
-
-    auto color = m_isCurrentProject ? selectedColor : unselectedColor;
+    auto color = m_isCurrentProject ? SELECTED_COLOR : UNSELECTED_COLOR;
     dc.SetBrush(color);
     dc.SetPen(*wxTRANSPARENT_PEN);
     dc.DrawRoundedRectangle(wxRect(wxDefaultPosition, GetSize()), 10);
@@ -154,7 +144,7 @@ wxString TaskProjectComp::getProjectName(bool gui) const {
     return m_taskList->name;
 }
 
-std::uint32_t TaskProjectComp::getProjectId() const {
+Core::ID TaskProjectComp::getProjectId() const {
     return m_taskList->taskListId;
 }
 
