@@ -1,4 +1,5 @@
 #include "../include/TodoList/TaskComp.hpp"
+#include "../include/TodoList/Events.hpp"
 #include "../include/TodoList/Utils.hpp"
 
 #include <algorithm>
@@ -20,6 +21,11 @@ static void showSizer(wxSizer* sizer, bool state = true);
 static void onReturnPressed(TodoList::Gui::TaskComp* taskComp);
 static void onEscapePressed(TodoList::Gui::TaskComp* taskComp);
 
+static void setBindings(TodoList::Gui::TaskComp*);
+static void setStyle(TodoList::Gui::TaskComp*);
+static void allocateControls(TodoList::Gui::TaskComp*);
+static void setControlsLayout(TodoList::Gui::TaskComp*);
+
 namespace TodoList::Gui {
 
 TaskComp::TaskComp(wxWindow* parent, wxWindowID id, Core::Task* taskPtr,
@@ -32,64 +38,15 @@ TaskComp::TaskComp(wxWindow* parent, wxWindowID id, Core::Task* taskPtr,
     SetMinSize(DEFAULT_SIZE);
     SetSizer(new wxBoxSizer(wxHORIZONTAL));
 
-    allocateControls();
-    setControlsLayout();
+    allocateControls(this);
+    setControlsLayout(this);
     setBindings();
-    setStyle();
+    setStyle(this);
 
     setStateDefault();
     Fit();
 
     Utility::refresh(this);
-}
-
-void TaskComp::allocateControls() {
-
-    checkBox = new wxCheckBox(this, wxID_ANY, "");
-
-    taskText = new wxStaticText(this, wxID_ANY, task->taskText);
-
-    auto textStyle = wxBORDER_NONE | wxTE_WORDWRAP;
-
-    textCtrl = new wxTextCtrl(this, wxID_ANY, task->taskText, wxDefaultPosition, wxDefaultSize, textStyle);
-
-    std::string dateText = "No Date";
-
-    if (auto dateTp = task->duoDate; task->duoDate.has_value()) {
-        dateText = Utility::timePointToStr(dateTp.value());
-    }
-    duoDateText = new wxStaticText(this, wxID_ANY, dateText);
-}
-
-void TaskComp::setControlsLayout() {
-    GetSizer()->Add(checkBox, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxALIGN_LEFT, 10);
-    GetSizer()->Add(taskText, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxALIGN_LEFT, 10);
-    GetSizer()->AddStretchSpacer();
-    GetSizer()->Add(duoDateText, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 10);
-    GetSizer()->Add(textCtrl, 1, wxEXPAND | wxALL, 10); // TODO: Consider wxExpand
-}
-
-void TaskComp::setBindings() {
-    Bind(wxEVT_LEFT_DCLICK, &TaskComp::onPanelDoubleLeftClick, this);
-
-    duoDateText->Bind(wxEVT_LEFT_DCLICK, &TaskComp::onDuoDateDoubleLeftClick, this);
-
-    Bind(wxEVT_PAINT, &TaskComp::onPaint, this);
-
-    checkBox->Bind(wxEVT_CHECKBOX, &TaskComp::onCheckBoxClick, this);
-
-    textCtrl->Bind(
-        wxEVT_KEY_DOWN, [this](wxKeyEvent& ev) { std::invoke(&TaskComp::onKeyPressedTextCtrl, this, std::ref(ev)); },
-        textCtrl->GetId());
-}
-
-void TaskComp::setStyle() {
-    wxFont font = textCtrl->GetFont();
-    font.SetPointSize(13);
-    textCtrl->SetFont(font);
-    SetBackgroundColour(wxTransparentColor);
-    textCtrl->SetBackgroundColour(wxColor(250, 250, 250));
-    SetWindowStyle(GetWindowStyle() | wxNO_BORDER);
 }
 
 void TaskComp::onPanelDoubleLeftClick(wxMouseEvent& ev) {
@@ -177,9 +134,23 @@ void TaskComp::setStateChangingText() {
     textCtrl->SetFocus();
 }
 
-void TaskComp::setText(const wxString& text){
+void TaskComp::setText(const wxString& text) {
     taskText->SetLabel(text);
     task->taskText = text;
+}
+
+void TaskComp::setBindings() {
+    Bind(wxEVT_LEFT_DCLICK, &TaskComp::onPanelDoubleLeftClick, this);
+
+    duoDateText->Bind(wxEVT_LEFT_DCLICK, &TaskComp::onDuoDateDoubleLeftClick, this);
+
+    Bind(wxEVT_PAINT, &TaskComp::onPaint, this);
+
+    checkBox->Bind(wxEVT_CHECKBOX, &TaskComp::onCheckBoxClick, this);
+
+    textCtrl->Bind(
+        wxEVT_KEY_DOWN, [this](wxKeyEvent& ev) { std::invoke(&TaskComp::onKeyPressedTextCtrl, this, std::ref(ev)); },
+        textCtrl->GetId());
 }
 
 } // namespace TodoList::Gui
@@ -207,4 +178,39 @@ static void onReturnPressed(TodoList::Gui::TaskComp* taskComp) {
     TodoList::Utility::refresh(taskComp);
 }
 
+void allocateControls(TodoList::Gui::TaskComp* pTaskComp) {
 
+    pTaskComp->checkBox = new wxCheckBox(pTaskComp, wxID_ANY, "");
+
+    pTaskComp->taskText = new wxStaticText(pTaskComp, wxID_ANY, pTaskComp->task->taskText);
+
+    auto textStyle = wxBORDER_NONE | wxTE_WORDWRAP;
+
+    pTaskComp->textCtrl =
+        new wxTextCtrl(pTaskComp, wxID_ANY, pTaskComp->task->taskText, wxDefaultPosition, wxDefaultSize, textStyle);
+
+    std::string dateText = "No Date";
+
+    if (auto dateTp = pTaskComp->task->duoDate; pTaskComp->task->duoDate.has_value()) {
+        dateText = TodoList::Utility::timePointToStr(dateTp.value());
+    }
+
+    pTaskComp->duoDateText = new wxStaticText(pTaskComp, wxID_ANY, dateText);
+}
+
+void setControlsLayout(TodoList::Gui::TaskComp* pTaskComp) {
+    pTaskComp->GetSizer()->Add(pTaskComp->checkBox, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxALIGN_LEFT, 10);
+    pTaskComp->GetSizer()->Add(pTaskComp->taskText, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxALIGN_LEFT, 10);
+    pTaskComp->GetSizer()->AddStretchSpacer();
+    pTaskComp->GetSizer()->Add(pTaskComp->duoDateText, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 10);
+    pTaskComp->GetSizer()->Add(pTaskComp->textCtrl, 1, wxEXPAND | wxALL, 10);
+}
+
+void setStyle(TodoList::Gui::TaskComp* pTaskComp) {
+    wxFont font = pTaskComp->textCtrl->GetFont();
+    font.SetPointSize(13);
+    pTaskComp->textCtrl->SetFont(font);
+    pTaskComp->SetBackgroundColour(wxTransparentColor);
+    pTaskComp->textCtrl->SetBackgroundColour(wxColor(250, 250, 250));
+    pTaskComp->SetWindowStyle(pTaskComp->GetWindowStyle() | wxNO_BORDER);
+}

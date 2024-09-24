@@ -1,10 +1,10 @@
 #pragma once
 
 #include "AppCore.hpp"
-#include "Defines.hpp"
 #include "Events.hpp"
 #include "TaskComp.hpp"
 #include "TaskProjectComp.hpp"
+#include "Defines.hpp"
 
 #include <utility>
 
@@ -77,6 +77,7 @@ private:
     void refreshTaskPanel();
     void updateToday(const Core::TimePoint&, Core::Task* task);
 
+
     // Events
     void onProjectChange(wxCommandEvent&);
     void onTaskChecked(wxCommandEvent&);
@@ -85,6 +86,7 @@ private:
     void onCalDialogRequest(wxCommandEvent&);
     void onCalDialogDonePressed(wxCommandEvent&);
     void onProjectNameChanged(wxCommandEvent&);
+    void onCalDialogCancelPressed(wxCommandEvent&);
 };
 
 template <class... Args>
@@ -105,6 +107,7 @@ MainFrame::MainFrame(Args... args)
     Bind(EVT_CHANGE_PROJECT, &MainFrame::onProjectChange, this);
     Bind(EVT_TASK_FINISHED, &MainFrame::onTaskChecked, this);
     Bind(EVT_REQUEST_CAL_DIALOG, &MainFrame::onCalDialogRequest, this);
+
 
     Layout();
     SetClientSize(DEFAULT_FRAME_DIMS);

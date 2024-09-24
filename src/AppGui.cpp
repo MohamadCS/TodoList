@@ -8,6 +8,7 @@
 wxIMPLEMENT_APP(TodoList::Gui::AppGui);
 
 namespace TodoList::Gui {
+
 bool AppGui::OnInit() {
     m_views.mainFrame = new MainFrame(nullptr, wxID_ANY, APP_NAME, wxDefaultPosition, wxDefaultSize);
     m_views.mainFrame->Show();

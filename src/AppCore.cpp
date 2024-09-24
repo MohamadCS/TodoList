@@ -49,5 +49,7 @@ ID App::getCurrentProjectId() const {
     return m_currentProjectId;
 }
 
+
+
 } // namespace TodoList::Core
 //

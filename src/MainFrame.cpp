@@ -67,10 +67,10 @@ void MainFrame::setProject(TaskProjectComp* newProject) {
 }
 
 void MainFrame::onAddTaskButtonClicked(wxCommandEvent& ev) {
-    auto mouseEvent = wxMouseEvent();
+    // auto mouseEvent = wxMouseEvent();
 
     if (auto taskPtr = m_taskPanel.currentTaskCompList->addTask(m_taskPanel.bottomPanel); taskPtr) {
-        taskPtr.value()->onPanelDoubleLeftClick(mouseEvent);
+        taskPtr.value()->setStateChangingText();
     } else {
         std::unreachable();
     }
@@ -125,15 +125,22 @@ void MainFrame::onCalDialogDonePressed(wxCommandEvent& ev) {
         wxLogDebug("nullptr");
     }
 
-    auto [taskCompPtr, dateChanging] = *m_calDialog.currentTaskPair;
+    auto [pTaskComp, dateChanging] = *m_calDialog.currentTaskPair;
     auto calDate = m_calDialog.calenderCtrl->GetDate();
     auto calDateChrono = wxDateTimeToChrono(calDate);
 
-    taskCompPtr->setDate(calDateChrono, dateChanging);
+    pTaskComp->setDate(calDateChrono, dateChanging);
 
     // updateToday(calDateChrono, taskCompPtr->task);
     m_calDialog.dialog->EndModal(0);
 
+    ev.Skip();
+}
+
+void MainFrame::onCalDialogCancelPressed(wxCommandEvent& ev) {
+    wxLogDebug("Dialog Cancel Button pressed");
+
+    m_calDialog.dialog->EndModal(0);
     ev.Skip();
 }
 
@@ -148,7 +155,9 @@ void MainFrame::updateToday(const Core::TimePoint& timePoint, Core::Task* pTask)
     }
 
     auto* todayProjectComp = m_sidebar.projectsList[Utility::TODAY_IDX];
-    todayProjectComp->addTask(m_taskPanel.bottomPanel, pTask);
+
+    if (!todayProjectComp->addTask(m_taskPanel.bottomPanel, pTask)) {
+    }
 }
 
 } // namespace TodoList::Gui
@@ -174,13 +183,14 @@ void MainFrame::onProjectNameChanged(wxCommandEvent&) {
 
     wxLogDebug("Changing Project's Name");
 
-    constexpr int maxSize{45};
     auto name = m_taskPanel.projectNameTextCtrl->GetValue();
-    if (m_taskPanel.projectNameTextCtrl->GetValue().size() > maxSize) {
-        name = name.SubString(0, maxSize - 1);
-        m_taskPanel.projectNameTextCtrl->SetValue(name);
-        m_taskPanel.projectNameTextCtrl->SetInsertionPointEnd();
-    }
+
+    // constexpr int maxSize{45};
+    // if (m_taskPanel.projectNameTextCtrl->GetValue().size() > maxSize) {
+    //     name = name.SubString(0, maxSize - 1);
+    //     m_taskPanel.projectNameTextCtrl->SetValue(name);
+    //     m_taskPanel.projectNameTextCtrl->SetInsertionPointEnd();
+    // }
 
     m_taskPanel.currentTaskCompList->setProjectName(name, true);
     Utility::refresh(m_taskPanel.currentTaskCompList);
@@ -309,6 +319,10 @@ void MainFrame::addCalDialog() {
 
     m_calDialog.doneButton->Bind(wxEVT_BUTTON, [this](wxCommandEvent& ev) {
         std::invoke(&MainFrame::onCalDialogDonePressed, this, std::ref(ev));
+    });
+
+    m_calDialog.cancelButton->Bind(wxEVT_BUTTON, [this](wxCommandEvent& ev) {
+        std::invoke(&MainFrame::onCalDialogCancelPressed, this, std::ref(ev));
     });
 
     m_calDialog.dialog->Fit();

@@ -7,6 +7,7 @@ std::string timePointToStr(const Core::TimePoint& timePoint) {
     return std::format("{:%d %B}", timePoint);
 }
 
+// FIXME: Always returns true for some reason.
 bool isToday(const TodoList::Core::TimePoint& date) {
     auto now = std::chrono::system_clock::now();
 

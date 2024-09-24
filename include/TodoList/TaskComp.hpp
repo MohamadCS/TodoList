@@ -1,10 +1,6 @@
 #pragma once
 
 #include "AppCore.hpp"
-#include "Events.hpp"
-#include <cstdint>
-#include <map>
-
 #include "wx/event.h"
 #include <wx/checkbox.h>
 #include <wx/dcclient.h>
@@ -39,25 +35,19 @@ struct TaskComp : public wxPanel {
     void setStateChangingText();
     void setStateDefault();
 
-    // TODO: Consider making them static in the source file.
-    void setBindings();
-    void setStyle();
-    void allocateControls();
-    void setControlsLayout();
-
     void cancelTextInsertion();
-
-    // Event Handling
-    void onPaint(wxPaintEvent& event);
-    void onKeyPressedTextCtrl(wxKeyEvent&);
-    void onPanelDoubleLeftClick(wxMouseEvent&);
-    void onCheckBoxClick(wxCommandEvent&);
-    void onDuoDateDoubleLeftClick(wxMouseEvent&);
 
     enum class Date {
         DUO_DATE,
         DEADLINE_DATE
     };
-
+    // Event Handling
+private:
+    void onPaint(wxPaintEvent& event);
+    void onKeyPressedTextCtrl(wxKeyEvent&);
+    void onPanelDoubleLeftClick(wxMouseEvent&);
+    void onCheckBoxClick(wxCommandEvent&);
+    void onDuoDateDoubleLeftClick(wxMouseEvent&);
+    void setBindings();
 };
 } // namespace TodoList::Gui
