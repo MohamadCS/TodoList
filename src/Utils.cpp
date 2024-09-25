@@ -1,10 +1,23 @@
 #include "../include/TodoList/Utils.hpp"
 #include <ctime>
+#include <filesystem>
+#include <vector>
 
 namespace TodoList::Utility {
 
 std::string timePointToStr(const Core::TimePoint& timePoint) {
     return std::format("{:%d %B}", timePoint);
+}
+
+std::filesystem::path makePath(const std::vector<std::string_view>& strVec) {
+    if (strVec.empty()) {
+        exit(0);
+    }
+    std::filesystem::path path;
+    for (auto& str : strVec) {
+        path.append(str);
+    }
+    return path;
 }
 
 // FIXME: Always returns true for some reason.

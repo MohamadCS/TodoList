@@ -41,6 +41,7 @@ struct TaskComp : public wxPanel {
         DUO_DATE,
         DEADLINE_DATE
     };
+
     // Event Handling
 private:
     void onPaint(wxPaintEvent& event);

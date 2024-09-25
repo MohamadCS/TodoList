@@ -1,9 +1,10 @@
 #pragma once
 
+#include "Database.hpp"
+
 #include <chrono>
 #include <cstdint>
 #include <deque>
-#include <map>
 #include <memory>
 #include <optional>
 #include <string>
@@ -45,11 +46,18 @@ public:
     static App& instance();
 
     Task* newTask(const std::string& taskText, const std::string& taskDesc, bool checked, TaskList* taskListPtr,
-                  const std::optional<TimePoint>& duoDate = std::nullopt,
+                  bool addToDb = true, const std::optional<TimePoint>& duoDate = std::nullopt,
                   const std::optional<TimePoint>& deadLine = std::nullopt);
 
-    TaskList* newTaskList();
-    TaskList* newTaskList(TaskList&& taskList);
+    TaskList* newTaskList(bool addToDB = true);
+    TaskList* newTaskList(TaskList&& taskList, bool addToDB = true);
+
+    void syncTask(const Task*);
+    void syncProject(const TaskList*);
+    void loadDatabases();
+
+    const std::deque<std::unique_ptr<Task>>& getTasksList() const;
+    const std::deque<std::unique_ptr<TaskList>>& getTaskLists() const;
 
     ID generateProjectId();
     ID getCurrentProjectId() const;
@@ -60,11 +68,13 @@ private:
     std::deque<std::unique_ptr<Task>> m_tasks;
     std::deque<std::unique_ptr<TaskList>> m_taskLists;
 
+    Database m_tasksDb;
+
     ID m_currentProjectId; // TODO: Move this as a flag in TaskProjectComp
     ID m_taskIdCtr = 1;
     ID m_projectIdCtr = 1;
 
-    App() = default;
+    App();
 };
 
 } // namespace TodoList::Core

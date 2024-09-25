@@ -160,6 +160,29 @@ void MainFrame::updateToday(const Core::TimePoint& timePoint, Core::Task* pTask)
     }
 }
 
+void MainFrame::loadProjects() {
+    LOG("Loading Projects");
+    auto& appCore = Core::App::instance();
+    auto& taskLists = appCore.getTaskLists();
+
+    std::map<Core::ID, TaskProjectComp*> idToTaskProjectComp;
+
+    for (int i = 2; i < taskLists.size(); ++i) {
+        auto* pTaskProjectComp{
+            new TaskProjectComp(m_sidebar.projectsPanel, wxID_ANY, std::nullopt, taskLists[i].get())};
+        m_sidebar.projectsPanel->GetSizer()->Add(pTaskProjectComp,
+                                                 wxSizerFlags(0).FixedMinSize().Border(wxALL, 5).Expand());
+        idToTaskProjectComp.insert_or_assign(pTaskProjectComp->getProjectId(), pTaskProjectComp);
+    }
+
+    auto& tasks = appCore.getTasksList();
+    for (int i = 0; i < tasks.size(); ++i) {
+        auto* task = tasks[i].get();
+        if (idToTaskProjectComp.at(task->taskList->taskListId)->addTask(m_taskPanel.bottomPanel, task)) {
+        }
+    }
+}
+
 } // namespace TodoList::Gui
 
 static TodoList::Core::TimePoint wxDateTimeToChrono(const wxDateTime& wxDate) {

@@ -33,7 +33,6 @@ TaskComp::TaskComp(wxWindow* parent, wxWindowID id, Core::Task* taskPtr,
     : wxPanel(parent, id, postion, size),
       task(taskPtr) {
 
-    // taskProjects.insert_or_assign(taskProject.first, taskProject.second);
     SetName("Task");
     SetMinSize(DEFAULT_SIZE);
     SetSizer(new wxBoxSizer(wxHORIZONTAL));
@@ -137,6 +136,7 @@ void TaskComp::setStateChangingText() {
 void TaskComp::setText(const wxString& text) {
     taskText->SetLabel(text);
     task->taskText = text;
+    Core::App::instance().syncTask(task);
 }
 
 void TaskComp::setBindings() {

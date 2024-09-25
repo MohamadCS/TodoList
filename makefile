@@ -3,9 +3,12 @@ VERSION = -std=c++2b
 CFLAGS=
 INCLUDE_DIR=./include/TodoList
 SRC_DIR = ./src
+SQLITE_DIR=./include/sqlite
+SQLITE_OBJ=$(SQLITE_DIR)/sqlite.o
 BUILD_DIR = ./build
 WX_WIDGETS_LINK = $(shell ~/Developer/CppLibraries/wxWidgets/macbuild/wx-config --cxxflags --libs)
-CC= $(COMPILER) $(VERSION)
+CXX= $(COMPILER) $(VERSION)
+CC=gcc
 TARGET=TodoList
 
 # Gather C and C++ source files
@@ -25,13 +28,16 @@ leaks: $(BUILD_DIR)/$(TARGET)
 	leaks -atExit -- $(BUILD_DIR)/$(TARGET)
 
 $(BUILD_DIR)/$(TARGET): $(OBJECTS)
-	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $(WX_WIDGETS_LINK)
+	$(CXX) $(CFLAGS) $(OBJECTS) $(SQLITE_OBJ) -o $@ $(WX_WIDGETS_LINK)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
-	$(CC) $(CFLAGS) -c $< -o $@ $(WX_WIDGETS_LINK) 
+	$(CXX) $(CFLAGS) -c $< -o $@ $(WX_WIDGETS_LINK) 
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
-	$(CC) $(CFLAGS) $(INCLUDE_DIR) -c $< -o $@ $(WX_WIDGETS_LINK)
+	$(CXX) $(CFLAGS) $(INCLUDE_DIR) -c $< -o $@ $(WX_WIDGETS_LINK)
+
+sqlite: $(SQLITE_DIR)/sqlite3.c
+		$(CC) -c $(SQLITE_DIR)/sqlite3.c -o $(SQLITE_DIR)/sqlite.o
 
 clean:
 	rm -f $(BUILD_DIR)/*.o $(BUILD_DIR)/$(TARGET)

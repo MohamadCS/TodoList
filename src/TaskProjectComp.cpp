@@ -20,14 +20,18 @@ TaskProjectComp::TaskProjectComp(wxWindow* parent, wxWindowID id, const std::opt
     SetName("Project Panel");
     SetSizer(new wxBoxSizer(wxVERTICAL));
 
+    // TODO: change this
+
     auto& appCore = Core::App::instance();
-    m_taskList = taskList.value_or(appCore.newTaskList());
+    m_taskList = taskList.value_or(appCore.newTaskList(!taskList.has_value()));
     m_taskList->name = projectName.value_or(m_taskList->name);
 
     allocateControls();
     setControlsLayout();
     setBindings();
     setStyle();
+
+    appCore.syncProject(m_taskList);
 
     Fit();
 }
@@ -98,14 +102,14 @@ void TaskProjectComp::hideProject(wxSizer* sizer) {
     Layout();
 }
 
+// FIXME: Might consider reimplemnting when allowing project change.
 std::expected<TaskComp*, TaskProjectComp::Error> TaskProjectComp::addTask(wxPanel* control,
                                                                           std::optional<Core::Task*> optTask) {
     wxLogDebug("Creating a new task");
 
     auto& appCore = Core::App::instance();
-    auto* task = optTask.value_or(appCore.newTask("", "", false, m_taskList));
+    auto* task = optTask.value_or(appCore.newTask("", "", false, m_taskList, !optTask.has_value()));
     auto* taskComp = new TaskComp(control, wxID_ANY, task, {getProjectId(), this});
-
     if (appCore.getCurrentProjectId() == getProjectId()) {
         control->GetSizer()->Add(taskComp, SIZER_FLAGS);
     } else {
@@ -130,6 +134,7 @@ void TaskProjectComp::setProjectName(const wxString& newName, bool guiOnly) {
 
     if (!guiOnly) {
         m_taskList->name = newName;
+        Core::App::instance().syncProject(m_taskList);
     }
 
     m_projectNameText->SetLabel(newName);

@@ -41,7 +41,7 @@ struct TaskPanel {
     TaskProjectComp* currentTaskCompList = nullptr;
 };
 
-struct CalanderDialog {
+struct CalenderDialog {
     wxDialog* dialog;
     wxButton* doneButton;
     wxButton* cancelButton;
@@ -53,7 +53,6 @@ class MainFrame : public wxFrame {
 public:
     template <class... Args>
     MainFrame(Args... args);
-    void setup();
 
     ~MainFrame() override = default;
 
@@ -62,7 +61,7 @@ private:
     wxPanel* m_mainPanel;
     Sidebar m_sidebar;
     TaskPanel m_taskPanel;
-    CalanderDialog m_calDialog;
+    CalenderDialog m_calDialog;
 
     const wxSize DEFAULT_FRAME_DIMS = wxSize(800, 600);
     const int SIDEBAR_WIDTH = 200;
@@ -78,6 +77,8 @@ private:
     void updateToday(const Core::TimePoint&, Core::Task* task);
 
 
+    void loadProjects();
+    
     // Events
     void onProjectChange(wxCommandEvent&);
     void onTaskChecked(wxCommandEvent&);
@@ -102,6 +103,9 @@ MainFrame::MainFrame(Args... args)
     addSidebar();
     addTaskPanel();
     addCalDialog();
+
+    Core::App::instance().loadDatabases();
+    loadProjects();
 
     m_mainSplitter->SplitVertically(m_sidebar.sideBarPanel, m_taskPanel.taskPanel);
     Bind(EVT_CHANGE_PROJECT, &MainFrame::onProjectChange, this);
