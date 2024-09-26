@@ -49,6 +49,9 @@ public:
 
     void hideProject(wxSizer*);
 
+    std::vector<TaskComp*>& getTaskCompList();
+    const std::vector<TaskComp*>& getTaskCompList() const;
+
 private:
     bool m_isCurrentProject;
     Core::TaskList* m_taskList;

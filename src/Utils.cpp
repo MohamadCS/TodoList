@@ -1,6 +1,7 @@
 #include "../include/TodoList/Utils.hpp"
 #include <ctime>
 #include <filesystem>
+#include <functional>
 #include <vector>
 
 namespace TodoList::Utility {
@@ -33,5 +34,4 @@ bool isToday(const TodoList::Core::TimePoint& date) {
     return (now_tm->tm_year == date_tm->tm_year) && (now_tm->tm_mon == date_tm->tm_mon) &&
            (now_tm->tm_mday == date_tm->tm_mday);
 }
-
 } // namespace TodoList::Utility

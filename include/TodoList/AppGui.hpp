@@ -1,14 +1,17 @@
 #pragma once
+#include "Defines.hpp"
+#include "LoginFrame.hpp"
+#include "MainFrame.hpp"
+#include "SignupFrame.hpp"
+#include "wx/event.h"
 
+#include <variant>
 #include <wx/app.h>
 #include <wx/string.h>
 
-#include "MainFrame.hpp"
-
 namespace TodoList::Gui {
-struct Views {
-    MainFrame* mainFrame;
-};
+
+using View = std::variant<MainFrame*, LoginFrame*, SignupFrame*>;
 
 class AppGui : public wxApp {
 public:
@@ -18,8 +21,10 @@ public:
     bool OnInit() override;
 
 private:
-    Views m_views;
-    wxFrame* m_currentFrame;
+    std::map<Utility::Views, View> m_views;
+    View m_currentFrame;
+
+    void onChangeView(wxCommandEvent& evt);
 
     const wxString APP_NAME = "TodoList";
 };

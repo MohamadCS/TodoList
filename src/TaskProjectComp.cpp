@@ -23,8 +23,16 @@ TaskProjectComp::TaskProjectComp(wxWindow* parent, wxWindowID id, const std::opt
     // TODO: change this
 
     auto& appCore = Core::App::instance();
-    m_taskList = taskList.value_or(appCore.newTaskList(!taskList.has_value()));
-    m_taskList->name = projectName.value_or(m_taskList->name);
+    if (taskList.has_value()) {
+        LOG("Task List has value");
+    }
+
+    if (taskList.has_value()) {
+        m_taskList = taskList.value();
+    } else {
+        m_taskList = appCore.newTaskList(true);
+        m_taskList->name = projectName.value();
+    }
 
     allocateControls();
     setControlsLayout();
@@ -102,13 +110,30 @@ void TaskProjectComp::hideProject(wxSizer* sizer) {
     Layout();
 }
 
+std::vector<TaskComp*>& TaskProjectComp::getTaskCompList() {
+    return m_taskListComp;
+}
+
+const std::vector<TaskComp*>& TaskProjectComp::getTaskCompList() const {
+    return m_taskListComp;
+}
+
 // FIXME: Might consider reimplemnting when allowing project change.
 std::expected<TaskComp*, TaskProjectComp::Error> TaskProjectComp::addTask(wxPanel* control,
                                                                           std::optional<Core::Task*> optTask) {
     wxLogDebug("Creating a new task");
 
+
     auto& appCore = Core::App::instance();
-    auto* task = optTask.value_or(appCore.newTask("", "", false, m_taskList, !optTask.has_value()));
+    Core::Task* task = nullptr;
+
+    if (optTask.has_value()) {
+        task = optTask.value();
+    } else {
+        task = appCore.newTask("", "", false, m_taskList, true);
+    }
+
+    LOG("Im in project {}", getProjectId());
     auto* taskComp = new TaskComp(control, wxID_ANY, task, {getProjectId(), this});
     if (appCore.getCurrentProjectId() == getProjectId()) {
         control->GetSizer()->Add(taskComp, SIZER_FLAGS);

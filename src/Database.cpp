@@ -3,42 +3,17 @@
 #include <fstream>
 #include <functional>
 #include <iostream>
-#include <iterator>
 #include <optional>
 #include <sstream>
 #include <string>
 #include <vector>
+
 namespace TodoList::Core {
-
-template <class Iterator>
-static std::string convertContainerToListStr(Iterator begin, Iterator end,
-                                             std::function<std::string(Iterator)> itemFormat,
-                                             const std::string& sep = ",",
-                                             const std::optional<std::vector<std::string>> sepList = std::nullopt) {
-    std::stringstream columnsQuery;
-    std::function<std::string(int)> genSep;
-
-    if (sepList.has_value()) {
-        genSep = [&sepList](int i) { return sepList.value()[i]; };
-    } else {
-        genSep = [&sep](int i) { return sep; }; // TODO: Find a way to eliminate the function call.
-    }
-
-    int i = 0;
-    for (Iterator it = begin; it != end; ++it) {
-        columnsQuery << itemFormat(it);
-
-        if (std::next(it) != end) {
-            columnsQuery << genSep(i++);
-        }
-    }
-
-    return columnsQuery.str();
-}
 
 sqlite3* Database::getDb() const {
     return m_db;
 }
+
 Database::Database(const std::string& name, const std::filesystem::path& path)
     : m_name(name),
       m_path(path) {
@@ -66,7 +41,7 @@ void Database::newTable(const std::string& name, std::vector<std::pair<std::stri
                         bool ifNotExist) {
     std::string ifNotExistsStr = ifNotExist ? "IF NOT EXISTS" : "";
 
-    auto columnsQueryStr = convertContainerToListStr<decltype(columnsAndSettings.begin())>(
+    auto columnsQueryStr = Utility::convertContainerToListStr<decltype(columnsAndSettings.begin())>(
         columnsAndSettings.begin(), columnsAndSettings.end(), [](decltype(columnsAndSettings.begin()) it) {
             auto [column, setting] = *it;
             return column + " " + setting;
@@ -89,24 +64,26 @@ void Database::newTable(const std::string& name, std::vector<std::pair<std::stri
     int rc = sqlite3_exec(m_db, query.c_str(), nullptr, 0, &errorMsg);
 
     if (rc != SQLITE_OK) {
-        LOG("Error: {} {}", name, errorMsg);
+       LOG("Error: {} {}", name, errorMsg);
     }
 
     // Adding a new table
     m_tables.insert_or_assign(std::move(name), std::move(columns));
+    LOG("Added Table {}", name);
 }
 
 void Database::insertEntry(const std::string& tableName, const TblEntry& entry) {
     auto it = m_tables.find(tableName);
+
     if (it == m_tables.end()) {
         LOG("Table {} not found", tableName);
         return;
     }
 
-    std::string columnsListStr = convertContainerToListStr<decltype(entry.begin())>(
+    std::string columnsListStr = Utility::convertContainerToListStr<decltype(entry.begin())>(
         entry.begin(), entry.end(), [](decltype(entry.begin()) it) { return it->first; });
 
-    std::string valuesListStr = convertContainerToListStr<decltype(entry.begin())>(
+    std::string valuesListStr = Utility::convertContainerToListStr<decltype(entry.begin())>(
         entry.begin(), entry.end(), [](decltype(entry.begin()) it) { return it->second; });
 
     std::string query =
@@ -134,7 +111,7 @@ void Database::updateEntry(const std::string& tableName,
         LOG("Size mismatch");
     }
 
-    std::string whereListStr = convertContainerToListStr<decltype(whereVec.begin())>(
+    std::string whereListStr = Utility::convertContainerToListStr<decltype(whereVec.begin())>(
         whereVec.begin(), whereVec.end(),
         [](decltype(whereVec.begin()) it) {
             auto& [column, op, val] = *it;
@@ -142,7 +119,7 @@ void Database::updateEntry(const std::string& tableName,
         },
         "", binopOpVec);
 
-    std::string newValListStr = convertContainerToListStr<decltype(colValUpdateVec.begin())>(
+    std::string newValListStr = Utility::convertContainerToListStr<decltype(colValUpdateVec.begin())>(
         colValUpdateVec.begin(), colValUpdateVec.end(),
         [](decltype(colValUpdateVec.begin()) it) { return it->first + " = " + it->second; });
 

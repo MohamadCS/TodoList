@@ -1,10 +1,10 @@
 #pragma once
 
 #include "AppCore.hpp"
+#include "Defines.hpp"
 #include "Events.hpp"
 #include "TaskComp.hpp"
 #include "TaskProjectComp.hpp"
-#include "Defines.hpp"
 
 #include <utility>
 
@@ -29,7 +29,7 @@ struct Sidebar {
     wxScrolled<wxPanel>* projectsPanel;
     wxButton* addProjectButton;
     wxStaticText* myProjectsText;
-    std::vector<TaskProjectComp*> projectsList;
+    std::map<Core::ID, TaskProjectComp*> projectsList;
 };
 
 struct TaskPanel {
@@ -54,7 +54,9 @@ public:
     template <class... Args>
     MainFrame(Args... args);
 
+    bool intiated = false;
     ~MainFrame() override = default;
+    void setup();
 
 private:
     wxSplitterWindow* m_mainSplitter;
@@ -76,9 +78,8 @@ private:
     void refreshTaskPanel();
     void updateToday(const Core::TimePoint&, Core::Task* task);
 
-
     void loadProjects();
-    
+
     // Events
     void onProjectChange(wxCommandEvent&);
     void onTaskChecked(wxCommandEvent&);
@@ -96,28 +97,10 @@ MainFrame::MainFrame(Args... args)
 
     m_mainSplitter = new wxSplitterWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_LIVE_UPDATE);
 
-    m_mainSplitter->SetMinimumPaneSize(200);
-    m_mainSplitter->SetSashPosition(200);
-    m_mainSplitter->SetSashGravity(0);
-
-    addSidebar();
-    addTaskPanel();
-    addCalDialog();
-
-    Core::App::instance().loadDatabases();
-    loadProjects();
-
-    m_mainSplitter->SplitVertically(m_sidebar.sideBarPanel, m_taskPanel.taskPanel);
-    Bind(EVT_CHANGE_PROJECT, &MainFrame::onProjectChange, this);
-    Bind(EVT_TASK_FINISHED, &MainFrame::onTaskChecked, this);
-    Bind(EVT_REQUEST_CAL_DIALOG, &MainFrame::onCalDialogRequest, this);
-
-
     Layout();
     SetClientSize(DEFAULT_FRAME_DIMS);
     SetMinClientSize(DEFAULT_FRAME_DIMS);
     SetBackgroundColour(wxColor(255, 255, 255));
-    setProject(m_sidebar.projectsList[Utility::INBOX_IDX]);
 }
 
 } // namespace TodoList::Gui

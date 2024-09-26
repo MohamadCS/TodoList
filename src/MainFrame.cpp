@@ -24,6 +24,27 @@ static TodoList::Core::TimePoint wxDateTimeToChrono(const wxDateTime& wxDate);
 
 namespace TodoList::Gui {
 
+void MainFrame::setup() {
+
+
+    Core::App::instance().loadDatabases();
+    addSidebar();
+    addTaskPanel();
+    addCalDialog();
+    setProject(m_sidebar.projectsList[Utility::INBOX_IDX]);
+    loadProjects();
+
+    m_mainSplitter->SplitVertically(m_sidebar.sideBarPanel, m_taskPanel.taskPanel);
+    m_mainSplitter->SetMinimumPaneSize(200);
+    m_mainSplitter->SetSashPosition(200);
+    m_mainSplitter->SetSashGravity(0);
+
+    Bind(EVT_CHANGE_PROJECT, &MainFrame::onProjectChange, this);
+    Bind(EVT_TASK_FINISHED, &MainFrame::onTaskChecked, this);
+    Bind(EVT_REQUEST_CAL_DIALOG, &MainFrame::onCalDialogRequest, this);
+    Layout();
+}
+
 void MainFrame::refreshSidebar() {
     Utility::refresh(std::make_tuple(m_sidebar.homePanel, m_sidebar.projectsPanel, m_sidebar.sideBarPanel));
 }
@@ -83,7 +104,7 @@ void MainFrame::onAddProjectButtonClicked(wxCommandEvent& ev) {
 
     wxLogDebug("Added Project with ID: %d", newProject->getProjectId());
 
-    m_sidebar.projectsList.push_back(newProject);
+    m_sidebar.projectsList.insert_or_assign(newProject->getProjectId(), newProject);
     m_sidebar.projectsPanel->GetSizer()->Add(newProject, wxSizerFlags(0).FixedMinSize().Border(wxALL, 5).Expand());
 
     setProject(newProject);
@@ -131,7 +152,6 @@ void MainFrame::onCalDialogDonePressed(wxCommandEvent& ev) {
 
     pTaskComp->setDate(calDateChrono, dateChanging);
 
-    // updateToday(calDateChrono, taskCompPtr->task);
     m_calDialog.dialog->EndModal(0);
 
     ev.Skip();
@@ -165,21 +185,35 @@ void MainFrame::loadProjects() {
     auto& appCore = Core::App::instance();
     auto& taskLists = appCore.getTaskLists();
 
-    std::map<Core::ID, TaskProjectComp*> idToTaskProjectComp;
+    for (auto& [taskListId, pTaskList] : taskLists) {
 
-    for (int i = 2; i < taskLists.size(); ++i) {
-        auto* pTaskProjectComp{
-            new TaskProjectComp(m_sidebar.projectsPanel, wxID_ANY, std::nullopt, taskLists[i].get())};
+        if (taskListId <= Core::App::MAX_DEFAULT_ID) {
+            continue;
+        }
+
+        auto* pTaskProjectComp{new TaskProjectComp(m_sidebar.projectsPanel, wxID_ANY, std::nullopt, pTaskList.get())};
         m_sidebar.projectsPanel->GetSizer()->Add(pTaskProjectComp,
                                                  wxSizerFlags(0).FixedMinSize().Border(wxALL, 5).Expand());
-        idToTaskProjectComp.insert_or_assign(pTaskProjectComp->getProjectId(), pTaskProjectComp);
+        m_sidebar.projectsList.insert_or_assign(pTaskProjectComp->getProjectId(), pTaskProjectComp);
     }
 
+    LOG("Addin tasks comp");
+
     auto& tasks = appCore.getTasksList();
-    for (int i = 0; i < tasks.size(); ++i) {
-        auto* task = tasks[i].get();
-        if (idToTaskProjectComp.at(task->taskList->taskListId)->addTask(m_taskPanel.bottomPanel, task)) {
+    for (auto& pTask : tasks) {
+        LOG("Adding TaskCompList to {}", pTask.get()->taskList->taskListId);
+        if (m_sidebar.projectsList.at(pTask.get()->taskList->taskListId)
+                ->addTask(m_taskPanel.bottomPanel, pTask.get())) {
         }
+    }
+
+    for (auto& [_, pTaskProjectComp] : m_sidebar.projectsList) {
+        Utility::refresh(pTaskProjectComp);
+        for (auto* pTaskComp : pTaskProjectComp->getTaskCompList()) {
+            Utility::refresh(pTaskComp);
+        }
+        refreshSidebar();
+        refreshTaskPanel();
     }
 }
 
@@ -203,17 +237,7 @@ static TodoList::Core::TimePoint wxDateTimeToChrono(const wxDateTime& wxDate) {
 namespace TodoList::Gui {
 
 void MainFrame::onProjectNameChanged(wxCommandEvent&) {
-
-    wxLogDebug("Changing Project's Name");
-
     auto name = m_taskPanel.projectNameTextCtrl->GetValue();
-
-    // constexpr int maxSize{45};
-    // if (m_taskPanel.projectNameTextCtrl->GetValue().size() > maxSize) {
-    //     name = name.SubString(0, maxSize - 1);
-    //     m_taskPanel.projectNameTextCtrl->SetValue(name);
-    //     m_taskPanel.projectNameTextCtrl->SetInsertionPointEnd();
-    // }
 
     m_taskPanel.currentTaskCompList->setProjectName(name, true);
     Utility::refresh(m_taskPanel.currentTaskCompList);
@@ -291,10 +315,12 @@ void MainFrame::addSidebar() {
     m_sidebar.sideBarPanel->SetBackgroundColour(wxColour(250, 250, 250));
 
     auto& appCore = Core::App::instance();
-    m_sidebar.projectsList.resize(2);
 
-    m_sidebar.projectsList[Utility::INBOX_IDX] = new TaskProjectComp(m_sidebar.homePanel, wxID_ANY, "Inbox");
-    m_sidebar.projectsList[Utility::TODAY_IDX] = new TaskProjectComp(m_sidebar.homePanel, wxID_ANY, "Today");
+    m_sidebar.projectsList[Utility::INBOX_IDX] = new TaskProjectComp(
+        m_sidebar.homePanel, wxID_ANY, std::nullopt, appCore.getTaskLists().at(Utility::INBOX_IDX).get());
+
+    m_sidebar.projectsList[Utility::TODAY_IDX] = new TaskProjectComp(
+        m_sidebar.homePanel, wxID_ANY, std::nullopt, appCore.getTaskLists().at(Utility::TODAY_IDX).get());
 
     m_sidebar.homePanel->GetSizer()->Add(m_sidebar.projectsList[Utility::INBOX_IDX],
                                          wxSizerFlags(0).FixedMinSize().Border(wxALL, 5).Expand());

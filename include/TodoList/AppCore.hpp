@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Database.hpp"
+#include "Account.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -43,6 +44,8 @@ struct TaskList {
 
 class App {
 public:
+    inline static constexpr ID MAX_DEFAULT_ID = 10;
+
     static App& instance();
 
     Task* newTask(const std::string& taskText, const std::string& taskDesc, bool checked, TaskList* taskListPtr,
@@ -54,10 +57,12 @@ public:
 
     void syncTask(const Task*);
     void syncProject(const TaskList*);
+    bool login(const std::string& email, const std::string& password);
+    bool signup(const Account&);
     void loadDatabases();
 
     const std::deque<std::unique_ptr<Task>>& getTasksList() const;
-    const std::deque<std::unique_ptr<TaskList>>& getTaskLists() const;
+    const std::map<ID,std::unique_ptr<TaskList>>& getTaskLists() const;
 
     ID generateProjectId();
     ID getCurrentProjectId() const;
@@ -66,13 +71,16 @@ public:
 
 private:
     std::deque<std::unique_ptr<Task>> m_tasks;
-    std::deque<std::unique_ptr<TaskList>> m_taskLists;
+    std::map<ID,std::unique_ptr<TaskList>> m_taskLists;
+
+    Account m_currentAccount;
 
     Database m_tasksDb;
+    Database m_accountsDb;
 
     ID m_currentProjectId; // TODO: Move this as a flag in TaskProjectComp
     ID m_taskIdCtr = 1;
-    ID m_projectIdCtr = 1;
+    ID m_projectIdCtr = MAX_DEFAULT_ID + 1;
 
     App();
 };
