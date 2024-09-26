@@ -4,7 +4,6 @@
 #include <functional>
 #include <iostream>
 #include <optional>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -64,7 +63,7 @@ void Database::newTable(const std::string& name, std::vector<std::pair<std::stri
     int rc = sqlite3_exec(m_db, query.c_str(), nullptr, 0, &errorMsg);
 
     if (rc != SQLITE_OK) {
-       LOG("Error: {} {}", name, errorMsg);
+        LOG("Error: {} {}", name, errorMsg);
     }
 
     // Adding a new table

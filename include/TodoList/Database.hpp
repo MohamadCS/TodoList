@@ -14,6 +14,7 @@ using TblEntry = std::vector<std::pair<std::string, std::string>>;
 class Database {
 public:
     Database(const std::string&, const std::filesystem::path& path);
+
     Database() = default;
 
     void newTable(const std::string& name, std::vector<std::pair<std::string, std::string>>&&, bool ifNotExist = true);

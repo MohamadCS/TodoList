@@ -85,7 +85,7 @@ void TaskComp::onPaint(wxPaintEvent& ev) {
 void TaskComp::onCheckBoxClick(wxCommandEvent& ev) {
     // Propogate "CheckBoxEvent"
     wxLogDebug("Checkbox Clicked");
-    task->checked = true;
+    task->setChecked(true);
     wxCommandEvent projectChangeEvent{EVT_TASK_FINISHED};
     projectChangeEvent.SetClientData(this);
     wxPostEvent(this, std::move(projectChangeEvent));
@@ -106,11 +106,11 @@ void TaskComp::setDate(const Core::TimePoint& timePoint, Date dateType) {
     switch (dateType) {
     case Date::DUO_DATE:
         duoDateText->SetLabel(dateText);
-        task->duoDate = timePoint;
+        task->setDuoDate(timePoint);
         break;
     case Date::DEADLINE_DATE:
         duoDateText->SetLabel(dateText);
-        task->deadLine = timePoint;
+        task->setDeadLine(timePoint);
         break;
     default:
         std::unreachable();
@@ -135,7 +135,7 @@ void TaskComp::setStateChangingText() {
 
 void TaskComp::setText(const wxString& text) {
     taskText->SetLabel(text);
-    task->taskText = text;
+    task->setTaskText(text.ToStdString());
     Core::App::instance().syncTask(task);
 }
 
@@ -182,16 +182,16 @@ void allocateControls(TodoList::Gui::TaskComp* pTaskComp) {
 
     pTaskComp->checkBox = new wxCheckBox(pTaskComp, wxID_ANY, "");
 
-    pTaskComp->taskText = new wxStaticText(pTaskComp, wxID_ANY, pTaskComp->task->taskText);
+    pTaskComp->taskText = new wxStaticText(pTaskComp, wxID_ANY, pTaskComp->task->getTaskText());
 
     auto textStyle = wxBORDER_NONE | wxTE_WORDWRAP;
 
     pTaskComp->textCtrl =
-        new wxTextCtrl(pTaskComp, wxID_ANY, pTaskComp->task->taskText, wxDefaultPosition, wxDefaultSize, textStyle);
+        new wxTextCtrl(pTaskComp, wxID_ANY, pTaskComp->task->getTaskText(), wxDefaultPosition, wxDefaultSize, textStyle);
 
     std::string dateText = "No Date";
 
-    if (auto dateTp = pTaskComp->task->duoDate; pTaskComp->task->duoDate.has_value()) {
+    if (auto dateTp = pTaskComp->task->getDuoDate(); pTaskComp->task->getDuoDate().has_value()) {
         dateText = TodoList::Utility::timePointToStr(dateTp.value());
     }
 

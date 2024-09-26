@@ -201,8 +201,8 @@ void MainFrame::loadProjects() {
 
     auto& tasks = appCore.getTasksList();
     for (auto& pTask : tasks) {
-        LOG("Adding TaskCompList to {}", pTask.get()->taskList->taskListId);
-        if (m_sidebar.projectsList.at(pTask.get()->taskList->taskListId)
+        LOG("Adding TaskCompList to {}", pTask.get()->getTaskList()->getId());
+        if (m_sidebar.projectsList.at(pTask.get()->getTaskList()->getId())
                 ->addTask(m_taskPanel.bottomPanel, pTask.get())) {
         }
     }

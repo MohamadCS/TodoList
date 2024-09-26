@@ -31,7 +31,7 @@ TaskProjectComp::TaskProjectComp(wxWindow* parent, wxWindowID id, const std::opt
         m_taskList = taskList.value();
     } else {
         m_taskList = appCore.newTaskList(true);
-        m_taskList->name = projectName.value();
+        m_taskList->setName( projectName.value());
     }
 
     allocateControls();
@@ -39,7 +39,6 @@ TaskProjectComp::TaskProjectComp(wxWindow* parent, wxWindowID id, const std::opt
     setBindings();
     setStyle();
 
-    appCore.syncProject(m_taskList);
 
     Fit();
 }
@@ -86,7 +85,7 @@ void TaskProjectComp::showProject(wxSizer* sizer) {
     auto add_comp = [&sizer, this](auto&& control) mutable {};
 
     for (auto* taskCompPtr : m_taskListComp) {
-        if (!taskCompPtr->task->checked) {
+        if (!taskCompPtr->task->isChecked()) {
             sizer->Add(taskCompPtr, SIZER_FLAGS);
             taskCompPtr->Show();
         }
@@ -158,8 +157,7 @@ void TaskProjectComp::onPaint(wxPaintEvent&) {
 void TaskProjectComp::setProjectName(const wxString& newName, bool guiOnly) {
 
     if (!guiOnly) {
-        m_taskList->name = newName;
-        Core::App::instance().syncProject(m_taskList);
+        m_taskList->setName(newName.ToStdString());
     }
 
     m_projectNameText->SetLabel(newName);
@@ -171,11 +169,11 @@ wxString TaskProjectComp::getProjectName(bool gui) const {
     if (gui) {
         return m_projectNameText->GetLabel();
     }
-    return m_taskList->name;
+    return m_taskList->getName();
 }
 
 Core::ID TaskProjectComp::getProjectId() const {
-    return m_taskList->taskListId;
+    return m_taskList->getId();
 }
 
 } // namespace TodoList::Gui

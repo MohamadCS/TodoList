@@ -1,8 +1,8 @@
 #include "../include/TodoList/AppCore.hpp"
 #include "../include/TodoList/Defines.hpp"
 #include "../include/TodoList/Utils.hpp"
-#include "wx/datetime.h"
 #include <assert.h>
+#include <cstdint>
 #include <cstdlib>
 #include <memory>
 #include <optional>
@@ -39,13 +39,13 @@ App& App::instance() {
     return app;
 }
 
-Task* App::newTask(const std::string& taskText, const std::string& taskDesc, bool checked, TaskList* pTaskList,
+Task* App::newTask(const std::string& taskText, const std::string& taskDesc, std::uint8_t checked, TaskList* pTaskList,
                    bool addToDb, const std::optional<TimePoint>& duoDate, const std::optional<TimePoint>& deadLine) {
 
-    Task task = {duoDate, deadLine, taskText, taskDesc, checked, m_taskIdCtr++};
+    Task task = Task(taskText, taskDesc, m_taskIdCtr++, checked, pTaskList, duoDate, deadLine);
     auto taskUniquePtr = std::make_unique<Task>(std::move(task));
     auto* taskPtr = taskUniquePtr.get();
-    taskPtr->taskList = pTaskList;
+    taskPtr->setTaskList(pTaskList);
     if (addToDb) {
         m_tasksDb.insertEntry(Utility::TASKS_TBL_NAME, taskToTblEntry(taskPtr));
     }
@@ -56,8 +56,8 @@ Task* App::newTask(const std::string& taskText, const std::string& taskDesc, boo
 TaskList* App::newTaskList(bool addToDb) {
     auto pTaskList = std::make_unique<TaskList>();
     auto* retVal = pTaskList.get();
-    pTaskList->taskListId = generateProjectId();
-    m_taskLists.insert_or_assign(retVal->taskListId, std::move(pTaskList));
+    pTaskList->setId(generateProjectId());
+    m_taskLists.insert_or_assign(retVal->getId(), std::move(pTaskList));
     if (addToDb) {
         m_tasksDb.insertEntry(Utility::PROJECTS_TBL_NAME, projectToTblEntry(retVal));
         LOG("Adding Project to DB");
@@ -68,7 +68,7 @@ TaskList* App::newTaskList(bool addToDb) {
 TaskList* App::newTaskList(TaskList&& taskList, bool addToDb) {
     auto pTaskList = std::make_unique<TaskList>(std::move(taskList));
     auto* retVal = pTaskList.get();
-    m_taskLists.insert_or_assign(retVal->taskListId, std::move(pTaskList));
+    m_taskLists.insert_or_assign(retVal->getId(), std::move(pTaskList));
     if (addToDb) {
         m_tasksDb.insertEntry(Utility::PROJECTS_TBL_NAME, projectToTblEntry(retVal));
     }
@@ -97,9 +97,9 @@ void App::syncTask(const Task* pTask) {
     auto getCol = [](Utility::TasksTblCols col) { return Utility::tasksColsToStr.at(col); };
 
     m_tasksDb.updateEntry(Utility::TASKS_TBL_NAME,
-                          {{getCol(Utility::TasksTblCols::ID), "=", std::to_string(pTask->taskId)}},
-                          {{getCol(Utility::TasksTblCols::TEXT), std::format("\'{}\'", pTask->taskText)},
-                           {getCol(Utility::TasksTblCols::PROJECT_ID), std::to_string(pTask->taskList->taskListId)}});
+                          {{getCol(Utility::TasksTblCols::ID), "=", std::to_string(pTask->getId())}},
+                          {{getCol(Utility::TasksTblCols::TEXT), std::format("\'{}\'", pTask->getTaskText())},
+                           {getCol(Utility::TasksTblCols::PROJECT_ID), std::to_string(pTask->getTaskList()->getId())}});
 }
 
 void App::syncProject(const TaskList* pTaskList) {
@@ -111,9 +111,9 @@ void App::syncProject(const TaskList* pTaskList) {
     auto getCol = [](Utility::ProjectsTblCols col) { return Utility::projectsColsToStr.at(col); };
 
     m_tasksDb.updateEntry(Utility::PROJECTS_TBL_NAME,
-                          {{getCol(Utility::ProjectsTblCols::ID), "=", std::to_string(pTaskList->taskListId)}},
+                          {{getCol(Utility::ProjectsTblCols::ID), "=", std::to_string(pTaskList->getId())}},
                           {
-                              {getCol(Utility::ProjectsTblCols::NAME), std::format("\'{}\'", pTaskList->name)},
+                              {getCol(Utility::ProjectsTblCols::NAME), std::format("\'{}\'", pTaskList->getName())},
                           });
 }
 
@@ -147,10 +147,10 @@ void App::loadDatabases() {
     TaskList* pTodayList = nullptr;
     TaskList* pInboxList = nullptr;
 
-    auto todayList = TaskList{{}, "Today", Utility::TODAY_IDX};
+    auto todayList = TaskList(Utility::TODAY_IDX, "Today", {});
     syncProject(newTaskList(std::move(todayList), true));
 
-    auto inboxList = TaskList{{}, "Inbox", Utility::INBOX_IDX};
+    auto inboxList = TaskList(Utility::INBOX_IDX, "Inbox", {});
     syncProject(newTaskList(std::move(inboxList), true));
 
     int i = 0;
@@ -164,8 +164,8 @@ void App::loadDatabases() {
         const char* projectName = (const char*)sqlite3_column_text(stmt, 1);
         LOG("Loading Project {}", projectName);
         auto* pTaskList = newTaskList(false);
-        pTaskList->name = projectName;
-        pTaskList->taskListId = projectId;
+        pTaskList->setName(projectName);
+        pTaskList->setId(projectId);
         ++i;
     }
 
@@ -251,8 +251,8 @@ bool App::login(const std::string& loginEmail, const std::string& loginPassword)
 bool App::signup(const Account& account) {
 
     std::string query = std::format("SELECT * FROM {}", TodoList::Utility::ACCOUNTS_TBL_NAME);
-    sqlite3_stmt* stmt;
 
+    sqlite3_stmt* stmt;
     if (sqlite3_prepare_v2(m_accountsDb.getDb(), query.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
         LOG("Error: {}", sqlite3_errmsg(m_tasksDb.getDb()));
         exit(0);
@@ -268,10 +268,10 @@ bool App::signup(const Account& account) {
             return false;
         }
     }
+    sqlite3_finalize(stmt);
 
     m_accountsDb.insertEntry(Utility::ACCOUNTS_TBL_NAME, accountToTblEntry(account));
 
-    sqlite3_finalize(stmt);
     return true;
 }
 
@@ -285,9 +285,9 @@ static TodoList::Core::TblEntry taskToTblEntry(const TodoList::Core::Task* pTask
     auto getCol = [](TodoList::Utility::TasksTblCols col) { return TodoList::Utility::tasksColsToStr.at(col); };
 
     return TodoList::Core::TblEntry{
-        {getCol(TodoList::Utility::TasksTblCols::ID), std::to_string(pTask->taskId)},
-        {getCol(TodoList::Utility::TasksTblCols::TEXT), std::format("\'{}\'", pTask->taskText)},
-        {getCol(TodoList::Utility::TasksTblCols::PROJECT_ID), std::to_string(pTask->taskList->taskListId)},
+        {getCol(TodoList::Utility::TasksTblCols::ID), std::to_string(pTask->getId())},
+        {getCol(TodoList::Utility::TasksTblCols::TEXT), std::format("\'{}\'", pTask->getTaskText())},
+        {getCol(TodoList::Utility::TasksTblCols::PROJECT_ID), std::to_string(pTask->getTaskList()->getId())},
     };
 }
 
@@ -299,8 +299,8 @@ static TodoList::Core::TblEntry projectToTblEntry(const TodoList::Core::TaskList
     auto getCol = [](TodoList::Utility::ProjectsTblCols col) { return TodoList::Utility::projectsColsToStr.at(col); };
 
     return TodoList::Core::TblEntry{
-        {getCol(TodoList::Utility::ProjectsTblCols::ID), std::to_string(pTaskList->taskListId)},
-        {getCol(TodoList::Utility::ProjectsTblCols::NAME), std::format("\'{}\'", pTaskList->name)},
+        {getCol(TodoList::Utility::ProjectsTblCols::ID), std::to_string(pTaskList->getId())},
+        {getCol(TodoList::Utility::ProjectsTblCols::NAME), std::format("\'{}\'", pTaskList->getName())},
     };
 }
 
@@ -313,3 +313,109 @@ static TodoList::Core::TblEntry accountToTblEntry(const TodoList::Core::Account&
         {getCol(TodoList::Utility::AccountTblCols::PASSWORD), std::format("\'{}\'", account.getPassword())},
     };
 }
+
+namespace TodoList::Core {
+
+Task::Task(const std::string& text, const std::string& desc, ID id, std::uint8_t checked, TaskList* pTaskList,
+           const std::optional<TimePoint>& duoDate, const std::optional<TimePoint>& deadLine)
+    : m_taskId(id),
+      m_checked(checked),
+      m_taskText(text),
+      m_taskDesc(desc),
+      m_taskList(pTaskList),
+      m_duoDate(duoDate),
+      m_deadLine(deadLine) {
+}
+
+std::optional<TimePoint> Task::getDuoDate() const {
+    return m_duoDate;
+}
+std::optional<TimePoint> Task::getDeadLine() const {
+    return m_deadLine;
+}
+
+std::string Task::getTaskDesc() const {
+    return m_taskDesc;
+}
+std::string Task::getTaskText() const {
+    return m_taskText;
+}
+
+std::uint8_t Task::isChecked() const {
+    return m_checked;
+}
+
+ID Task::getId() const {
+    return m_taskId;
+}
+
+TaskList* Task::getTaskList() const {
+    return m_taskList;
+}
+
+void Task::setDuoDate(const std::optional<TimePoint>& tp) {
+    m_duoDate = tp;
+    App::instance().syncTask(this);
+}
+void Task::setDeadLine(const std::optional<TimePoint>& tp) {
+    m_deadLine = tp;
+    App::instance().syncTask(this);
+}
+
+void Task::setTaskDesc(const std::string& taskDesc) {
+    m_taskDesc = taskDesc;
+    App::instance().syncTask(this);
+}
+void Task::setTaskText(const std::string& taskText) {
+    m_taskText = taskText;
+    App::instance().syncTask(this);
+}
+
+void Task::setChecked(std::uint8_t checked) {
+    m_checked = checked;
+    App::instance().syncTask(this);
+}
+
+void Task::setTaskList(TaskList* pTaskList) {
+    m_taskList = pTaskList;
+    App::instance().syncTask(this);
+}
+
+void Task::setId(ID id) {
+    m_taskId = id;
+    App::instance().syncTask(this);
+}
+
+TaskList::TaskList(ID id, const std::string& name, const std::vector<Task*>& tasks)
+    : m_taskListId(id),
+      m_name(name),
+      m_tasks(tasks) {
+}
+
+std::string TaskList::getName() const {
+    return m_name;
+}
+const std::vector<Task*>& TaskList::getTasks() const {
+    return m_tasks;
+}
+std::vector<Task*>& TaskList::getTasks() {
+    return m_tasks;
+}
+ID TaskList::getId() const {
+    return m_taskListId;
+}
+
+void TaskList::setId(ID newId) {
+    m_taskListId = newId;
+    App::instance().syncProject(this);
+}
+void TaskList::setTasks(const std::vector<Task*> newTasks) {
+    m_tasks = newTasks;
+    App::instance().syncProject(this);
+}
+void TaskList::setName(const std::string& name) {
+    m_name = name;
+    App::instance().syncProject(this);
+}
+
+} // namespace TodoList::Core
